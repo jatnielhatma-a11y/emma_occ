@@ -1,0 +1,36 @@
+{
+  "name": "Emma OCC v2",
+  "short_name": "Emma OCC",
+  "description": "Personal operations control center for roster, commute, weather, email, and analytics.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Commute Check",
+      "short_name": "Commute",
+      "url": "/?view=commute"
+    },
+    {
+      "name": "Roster",
+      "short_name": "Roster",
+      "url": "/?view=roster"
+    },
+    {
+      "name": "Risk Status",
+      "short_name": "Risk",
+      "url": "/?view=risk"
+    }
+  ]
+}
