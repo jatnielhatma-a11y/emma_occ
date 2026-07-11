@@ -1,0 +1,10 @@
+{
+  "name": "Emma OCC",
+  "short_name": "Emma OCC",
+  "description": "Personal Operations Control Center",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08101f",
+  "theme_color": "#08101f",
+  "icons": [{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

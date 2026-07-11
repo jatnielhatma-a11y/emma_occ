@@ -1,8 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b1020"/><stop offset=".55" stop-color="#172044"/><stop offset="1" stop-color="#77a7ff"/></linearGradient></defs>
-<rect width="512" height="512" rx="110" fill="url(#g)"/>
-<circle cx="256" cy="256" r="178" fill="none" stroke="#20d17d" stroke-width="18"/>
-<text x="256" y="116" font-family="Arial" font-size="58" font-weight="800" text-anchor="middle" fill="#f5f7fb">OCC</text>
-<path d="M132 285 L212 205 L273 266 L379 160" fill="none" stroke="#f5f7fb" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M135 350 H377" stroke="#ffb020" stroke-width="24" stroke-linecap="round"/>
-</svg>
+# Emma OCC v4
+
+A tested Next.js Operations Control Center dashboard for roster, commute execution, risk monitoring, KPIs, and decision support.
+
+## Included
+- Mission Status: On Schedule / At Risk / Delayed
+- Green / Amber / Red risk engine
+- Interactive delay and arrival-buffer simulation
+- Live-style commute timeline
+- Smart roster labels: Late Shift, Night Shift, OFF Day, Vacation
+- OFF Day and VL commute suppression
+- Operational watch list
+- Mission KPIs
+- Emma Decision Engine
+- Installable PWA metadata
+
+## Run locally
+```bash
+npm install
+npm run dev
+```
+Open http://localhost:3000
+
+## Production build
+```bash
+npm install
+npm run build
+npm start
+```
+
+## Deploy on Vercel
+1. Unzip the package.
+2. Upload the folder that directly contains `package.json`.
+3. Import it into Vercel.
+4. Framework should detect as **Next.js**.
+5. Leave Build Command and Output Directory on Vercel defaults.
+6. Deploy.
+
+No `vercel.json` is included or required.
+
+## Current data status
+The UI and operational logic are functional. Roster, NS, weather, Calendar, and Gmail are currently represented by local/mock data. The next release can connect secure server-side integrations.
