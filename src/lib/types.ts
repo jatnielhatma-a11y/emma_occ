@@ -1,0 +1,11 @@
+export type DataSource = 'live' | 'fallback' | 'unavailable';
+export type Risk = 'GREEN' | 'AMBER' | 'RED';
+export type MissionState = 'ON SCHEDULE' | 'AT RISK' | 'DELAYED';
+export type ShiftLabel = 'Late Shift' | 'Night Shift' | 'OFF Day' | 'Vacation' | 'Unknown';
+export type IntegrationStatus = { name: string; source: DataSource; message: string };
+export type Shift = { date: string; label: ShiftLabel; code: string; detail: string; start?: string; end?: string; commuteRequired: boolean };
+export type WalkingLeg = { from: string; to: string; durationMinutes: number; distanceMeters: number; source: DataSource };
+export type TrainLeg = { from: string; to: string; departure: string; arrival: string; platform?: string; direct: boolean; delayedMinutes: number; cancelled: boolean; source: DataSource };
+export type WeatherRisk = { severe: boolean; precipitationMm: number; windKph: number; addedWalkingMinutes: number; source: DataSource };
+export type EmailAlert = { subject: string; sender: string; reason: string; source: DataSource };
+export type OpsSnapshot = { generatedAt: string; roster: Shift[]; currentShift?: Shift; nextDuty?: Shift; walking: { outboundHome: WalkingLeg; outboundWork: WalkingLeg }; train: TrainLeg; weather: WeatherRisk; emails: EmailAlert[]; integrations: IntegrationStatus[]; bufferMinutes: number; risk: Risk; mission: MissionState; confidence: number; decision: string };

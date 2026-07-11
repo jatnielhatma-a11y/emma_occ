@@ -1,39 +1,42 @@
-export type Risk = 'GREEN' | 'AMBER' | 'RED';
-export type MissionState = 'ON SCHEDULE' | 'AT RISK' | 'DELAYED';
+import { fallbackHomeWalk, fallbackRoster, fallbackTrain, fallbackWorkWalk } from './fallback';
+import { getRoster } from './providers/calendar';
+import { getEmailAlerts } from './providers/gmail';
+import { getWalkingLeg } from './providers/maps';
+import { getTrainLeg } from './providers/ns';
+import { getWeatherRisk } from './providers/weather';
+import { nextActualDuty } from './roster';
+import { calculateRisk, confidenceScore, missionState } from './risk';
+import type { IntegrationStatus, OpsSnapshot } from './types';
 
-export type Shift = {
-  date: string;
-  label: 'Late Shift' | 'Night Shift' | 'OFF Day' | 'Vacation';
-  code: string;
-  detail: string;
-  start?: string;
-  end?: string;
-};
+function status(name: string, source: 'live' | 'fallback' | 'unavailable', message: string): IntegrationStatus { return { name, source, message }; }
 
-export const roster: Shift[] = [
-  { date: 'Today', label: 'Night Shift', code: '382G', detail: 'Asd - NH Mcn', start: '23:00', end: '07:05' },
-  { date: 'Tomorrow', label: 'Night Shift', code: '385U', detail: 'Noord + Oost Hc', start: '23:00', end: '07:05' },
-  { date: 'Sunday', label: 'Night Shift', code: '386N', detail: 'Noord + Oost Mcn', start: '23:00', end: '07:05' },
-  { date: 'Monday', label: 'OFF Day', code: 'R', detail: 'Rest Day' },
-  { date: 'Tuesday', label: 'Vacation', code: 'VL', detail: 'Vacation' },
-];
-
-export const timeline = [
-  { time: '21:51', event: 'Depart Almere Centrum', state: 'complete' },
-  { time: '22:36', event: 'Arrive Utrecht Centraal', state: 'current' },
-  { time: '22:36–22:56', event: 'Walk to Admiraal Helfrichlaan 1', state: 'planned' },
-  { time: '22:56', event: 'Estimated arrival at work', state: 'target' },
-  { time: '23:00', event: 'Shift starts', state: 'target' },
-];
-
-export function getRisk(bufferMinutes: number, delayMinutes: number): Risk {
-  if (delayMinutes >= 8 || bufferMinutes <= 0) return 'RED';
-  if (delayMinutes >= 3 || bufferMinutes < 10) return 'AMBER';
-  return 'GREEN';
-}
-
-export function getMissionState(risk: Risk): MissionState {
-  if (risk === 'RED') return 'DELAYED';
-  if (risk === 'AMBER') return 'AT RISK';
-  return 'ON SCHEDULE';
+export async function buildOpsSnapshot(): Promise<OpsSnapshot> {
+  const [roster, outboundHome, outboundWork, train, weather, emails] = await Promise.all([
+    getRoster(),
+    getWalkingLeg('Lemmerstraat 18, Almere', 'Almere Centrum', fallbackHomeWalk),
+    getWalkingLeg('Utrecht Centraal', 'Admiraal Helfrichlaan 1, Utrecht', fallbackWorkWalk),
+    getTrainLeg(fallbackTrain),
+    getWeatherRisk(),
+    getEmailAlerts(),
+  ]);
+  const nextDuty = nextActualDuty(roster);
+  const currentShift = roster[0];
+  const targetBuffer = 12;
+  const bufferMinutes = Math.max(0, targetBuffer - train.delayedMinutes - weather.addedWalkingMinutes);
+  const risk = calculateRisk(bufferMinutes, train.delayedMinutes, weather.severe, train.cancelled);
+  const liveSources = [outboundHome.source, outboundWork.source, train.source, weather.source].filter((value) => value === 'live').length;
+  const confidence = confidenceScore(bufferMinutes, risk, liveSources);
+  const decision = train.cancelled ? 'Planned train cancelled. Take the fastest NS alternative immediately.' : risk === 'RED' ? 'Arrival is threatened. Leave earlier or use the fastest recovery option.' : risk === 'AMBER' ? 'Plan remains viable, but monitor closely and avoid unnecessary stops.' : 'Continue as planned; the protected arrival buffer is intact.';
+  return {
+    generatedAt: new Date().toISOString(), roster, currentShift, nextDuty,
+    walking: { outboundHome, outboundWork }, train, weather, emails,
+    integrations: [
+      status('Google Calendar', roster === fallbackRoster ? 'fallback' : 'live', process.env.GOOGLE_ACCESS_TOKEN ? 'OAuth token configured; live attempt enabled.' : 'Set GOOGLE_ACCESS_TOKEN for live roster.'),
+      status('Google Maps', outboundHome.source === 'live' && outboundWork.source === 'live' ? 'live' : 'fallback', process.env.GOOGLE_MAPS_API_KEY ? 'Routes API configured.' : 'Set GOOGLE_MAPS_API_KEY for live walking times.'),
+      status('NS', train.source, process.env.NS_API_KEY ? 'NS API configured.' : 'Set NS_API_KEY for live trains and platforms.'),
+      status('Weather', weather.source, 'Open-Meteo live weather with a 10-minute cache.'),
+      status('Gmail', process.env.GOOGLE_ACCESS_TOKEN ? 'live' : 'fallback', process.env.GOOGLE_ACCESS_TOKEN ? 'OAuth token configured; actionable messages enabled.' : 'Set GOOGLE_ACCESS_TOKEN for Gmail alerts.'),
+    ],
+    bufferMinutes, risk, mission: missionState(risk), confidence, decision,
+  };
 }

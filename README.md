@@ -1,42 +1,43 @@
-# Emma OCC v4
+# Emma OCC v4.1
 
-A tested Next.js Operations Control Center dashboard for roster, commute execution, risk monitoring, KPIs, and decision support.
+Operational core for roster, commute execution, weather risk, Gmail attention items, and decision support.
 
-## Included
-- Mission Status: On Schedule / At Risk / Delayed
-- Green / Amber / Red risk engine
-- Interactive delay and arrival-buffer simulation
-- Live-style commute timeline
-- Smart roster labels: Late Shift, Night Shift, OFF Day, Vacation
-- OFF Day and VL commute suppression
-- Operational watch list
-- Mission KPIs
-- Emma Decision Engine
-- Installable PWA metadata
+## What works now
 
-## Run locally
-```bash
-npm install
-npm run dev
-```
-Open http://localhost:3000
+- Mobile-first Next.js PWA dashboard
+- Server-side `/api/ops` aggregation endpoint
+- Roster classification for Late Shift, Night Shift, OFF Day, and Vacation
+- Google Maps Routes API walking calculations when configured
+- NS journey, platform, delay, and cancellation integration when configured
+- Live no-key weather integration using Open-Meteo
+- Google Calendar and Gmail OAuth integration when configured
+- Explicit fallback mode when credentials are unavailable
+- Five-minute dashboard refresh
+- Green/Amber/Red risk and mission-confidence logic
 
-## Production build
+## Vercel environment variables
+
+Copy `.env.example` into Vercel Project Settings → Environment Variables.
+
+- `GOOGLE_ACCESS_TOKEN`: OAuth access token with Calendar and Gmail scopes
+- `GOOGLE_CALENDAR_ID`: normally `primary`
+- `GOOGLE_MAPS_API_KEY`: server-side Routes API key
+- `NS_API_KEY`: NS Reisinformatie API subscription key
+- `NS_TRIPS_BASE_URL`: optional override
+- `GMAIL_QUERY`: optional Gmail search query
+
+## Commands
+
 ```bash
 npm install
 npm run build
 npm start
 ```
 
-## Deploy on Vercel
-1. Unzip the package.
-2. Upload the folder that directly contains `package.json`.
-3. Import it into Vercel.
-4. Framework should detect as **Next.js**.
-5. Leave Build Command and Output Directory on Vercel defaults.
-6. Deploy.
+## Security
 
-No `vercel.json` is included or required.
+All credentials are server-only. Do not prefix secrets with `NEXT_PUBLIC_`.
 
-## Current data status
-The UI and operational logic are functional. Roster, NS, weather, Calendar, and Gmail are currently represented by local/mock data. The next release can connect secure server-side integrations.
+## Data behavior
+
+Live providers are used when credentials are configured. If a provider is unavailable, Emma OCC clearly labels the source as fallback and keeps the dashboard operational instead of crashing.
