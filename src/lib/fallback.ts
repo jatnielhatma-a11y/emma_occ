@@ -9,6 +9,15 @@ export const fallbackRoster = [
 ];
 export const fallbackHomeWalk: WalkingLeg = { from: 'Lemmerstraat 18, Almere', to: 'Almere Centrum', durationMinutes: 18, distanceMeters: 1400, source: 'fallback' };
 export const fallbackWorkWalk: WalkingLeg = { from: 'Utrecht Centraal', to: 'Admiraal Helfrichlaan 1, Utrecht', durationMinutes: 20, distanceMeters: 1600, source: 'fallback' };
-export const fallbackTrain: TrainLeg = { from: 'Almere Centrum', to: 'Utrecht Centraal', departure: '21:51', arrival: '22:36', direct: true, delayedMinutes: 0, cancelled: false, source: 'fallback' };
+export const fallbackOutboundTrain: TrainLeg = {
+  from: 'Almere Centrum', to: 'Utrecht Centraal', departure: '21:51', arrival: '22:37',
+  platform: '2', arrivalPlatform: '1', exitSide: 'right', direct: true, transfers: 0,
+  durationMinutes: 46, delayedMinutes: 0, cancelled: false, source: 'fallback',
+};
+export const fallbackReturnTrain: TrainLeg = {
+  from: 'Utrecht Centraal', to: 'Almere Centrum', departure: '07:19', arrival: '08:05',
+  direct: true, transfers: 0, durationMinutes: 46, delayedMinutes: 0, cancelled: false, source: 'fallback',
+};
+export const fallbackTrain = fallbackOutboundTrain;
 export const fallbackWeather: WeatherRisk = { severe: false, precipitationMm: 0, windKph: 12, addedWalkingMinutes: 0, source: 'fallback' };
 export const fallbackEmails: EmailAlert[] = [];
