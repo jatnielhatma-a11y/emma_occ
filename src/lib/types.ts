@@ -3,6 +3,7 @@ export type Risk = 'GREEN' | 'AMBER' | 'RED';
 export type MissionState = 'ON SCHEDULE' | 'AT RISK' | 'DELAYED';
 export type ShiftLabel = 'Late Shift' | 'Night Shift' | 'OFF Day' | 'Vacation' | 'Unknown';
 export type CommuteDirection = 'outbound' | 'return' | 'none';
+export type TrafficCondition = 'LIGHT' | 'MODERATE' | 'HEAVY' | 'UNKNOWN';
 export type IntegrationStatus = { name: string; source: DataSource; message: string };
 export type Shift = { date: string; label: ShiftLabel; code: string; detail: string; start?: string; end?: string; commuteRequired: boolean };
 export type WalkingLeg = { from: string; to: string; durationMinutes: number; distanceMeters: number; source: DataSource };
@@ -21,6 +22,18 @@ export type TrainLeg = {
   cancelled: boolean;
   source: DataSource;
 };
+export type DrivingRoute = {
+  from: string;
+  to: string;
+  durationMinutes: number;
+  normalDurationMinutes: number;
+  trafficDelayMinutes: number;
+  distanceMeters: number;
+  condition: TrafficCondition;
+  alternateRoutes: number;
+  warnings: string[];
+  source: DataSource;
+};
 export type WeatherRisk = { severe: boolean; precipitationMm: number; windKph: number; addedWalkingMinutes: number; source: DataSource };
 export type EmailAlert = { subject: string; sender: string; reason: string; source: DataSource };
 export type OpsSnapshot = {
@@ -32,6 +45,7 @@ export type OpsSnapshot = {
   notificationRelevant: boolean;
   walking: { first: WalkingLeg; last: WalkingLeg; outboundHome: WalkingLeg; outboundWork: WalkingLeg };
   train: TrainLeg;
+  driving: DrivingRoute;
   weather: WeatherRisk;
   emails: EmailAlert[];
   integrations: IntegrationStatus[];

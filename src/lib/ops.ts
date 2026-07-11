@@ -1,5 +1,6 @@
 import { fallbackHomeWalk, fallbackOutboundTrain, fallbackReturnTrain, fallbackRoster, fallbackWorkWalk } from './fallback';
 import { getRoster } from './providers/calendar';
+import { getDrivingRoute } from './providers/driving';
 import { getEmailAlerts } from './providers/gmail';
 import { googleAuthConfigured } from './providers/google-auth';
 import { getWalkingLeg } from './providers/maps';
@@ -78,14 +79,19 @@ export async function buildOpsSnapshot(): Promise<OpsSnapshot> {
   const activeShift = currentShift?.commuteRequired ? currentShift : nextDuty;
   const direction = directionFor(activeShift);
   const outbound = direction !== 'return';
+  const home = 'Lemmerstraat 18, Almere';
+  const work = 'Admiraal Helfrichlaan 1, Utrecht';
+  const drivingFrom = outbound ? home : work;
+  const drivingTo = outbound ? work : home;
 
-  const [homeToStation, stationToWork, workToStation, stationToHome, weather, emails] = await Promise.all([
-    getWalkingLeg('Lemmerstraat 18, Almere', 'Almere Centrum', fallbackHomeWalk),
-    getWalkingLeg('Utrecht Centraal', 'Admiraal Helfrichlaan 1, Utrecht', fallbackWorkWalk),
-    getWalkingLeg('Admiraal Helfrichlaan 1, Utrecht', 'Utrecht Centraal', { ...fallbackWorkWalk, from: 'Admiraal Helfrichlaan 1, Utrecht', to: 'Utrecht Centraal' }),
-    getWalkingLeg('Almere Centrum', 'Lemmerstraat 18, Almere', { ...fallbackHomeWalk, from: 'Almere Centrum', to: 'Lemmerstraat 18, Almere' }),
+  const [homeToStation, stationToWork, workToStation, stationToHome, weather, emails, driving] = await Promise.all([
+    getWalkingLeg(home, 'Almere Centrum', fallbackHomeWalk),
+    getWalkingLeg('Utrecht Centraal', work, fallbackWorkWalk),
+    getWalkingLeg(work, 'Utrecht Centraal', { ...fallbackWorkWalk, from: work, to: 'Utrecht Centraal' }),
+    getWalkingLeg('Almere Centrum', home, { ...fallbackHomeWalk, from: 'Almere Centrum', to: home }),
     getWeatherRisk(),
     getEmailAlerts(),
+    getDrivingRoute(drivingFrom, drivingTo),
   ]);
 
   const fallbackTrain = outbound ? fallbackOutboundTrain : fallbackReturnTrain;
@@ -113,13 +119,15 @@ export async function buildOpsSnapshot(): Promise<OpsSnapshot> {
   const googleReady = googleAuthConfigured();
   return {
     generatedAt: new Date().toISOString(), roster, currentShift, nextDuty, direction, notificationRelevant,
-    walking: { first, last, outboundHome: homeToStation, outboundWork: stationToWork }, train, weather, emails,
+    walking: { first, last, outboundHome: homeToStation, outboundWork: stationToWork }, train, driving, weather, emails,
     integrations: [
       status('Google Calendar', roster === fallbackRoster ? 'fallback' : 'live', googleReady ? 'Renewable OAuth configured; roster-first mission selection enabled.' : 'Connect Google Calendar for live roster selection.'),
-      status('Google Maps', first.source === 'live' && last.source === 'live' ? 'live' : 'fallback', process.env.GOOGLE_MAPS_API_KEY ? 'Routes API is primary for both walking legs and detours.' : 'Set GOOGLE_MAPS_API_KEY for live walking distance and duration.'),
+      status('Google Maps', first.source === 'live' && last.source === 'live' ? 'live' : 'fallback', process.env.GOOGLE_MAPS_API_KEY ? 'Routes API is primary for walking, traffic-aware driving ETA, and alternative routes.' : 'Set GOOGLE_MAPS_API_KEY for live walking and driving intelligence.'),
+      status('Road Traffic', driving.source, driving.source === 'live' ? `Traffic-aware ETA active; ${driving.alternateRoutes} alternate route(s) available.` : 'Live driving ETA unavailable; Waze remains the navigation fallback.'),
+      status('Waze', 'live', 'Deep-link navigation enabled; Waze supplies in-app incidents, hazards, and rerouting.'),
       status('NS', train.source, process.env.NS_API_KEY ? 'Official NS journey data is primary; direct services are preferred.' : 'Set NS_API_KEY. Baseline uses 21:51–22:37, platform 2 → 1.'),
       status('9292', 'fallback', 'Backup reference when official NS journey data is unavailable.'),
-      status('Weather', weather.source, 'Live weather adds walking buffer for rain, wind, snow, or severe conditions.'),
+      status('Weather', weather.source, 'Live weather adds walking or driving caution for rain, wind, snow, or severe conditions.'),
       status('Gmail', googleReady ? 'live' : 'fallback', googleReady ? 'Renewable OAuth configured; actionable messages enabled.' : 'Set Google OAuth credentials for Gmail alerts.'),
     ],
     bufferMinutes, risk, mission: missionState(risk), confidence, decision,
