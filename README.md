@@ -38,6 +38,12 @@ Release 6 adds the `/production-readiness` readiness surface for release gates, 
 
 See `docs/NOVA_RELEASE_6_PRODUCTION_READINESS.md` for boundaries and verification notes.
 
+## NOVA Release 7 Production Hardening and Launch
+
+Release 7 makes NOVA production-live as a release candidate while keeping final v1.0 approval gated by rollback rehearsal, real-device PWA behavior, accessibility, performance, backup recovery, and live integration observation.
+
+See `docs/NOVA_RELEASE_7_PRODUCTION_LAUNCH.md` for launch rules, remaining manual gates, and release evidence.
+
 ## What works now
 
 - Mobile-first Next.js PWA dashboard
@@ -50,6 +56,7 @@ See `docs/NOVA_RELEASE_6_PRODUCTION_READINESS.md` for boundaries and verificatio
 - Explicit fallback mode when credentials are unavailable
 - Five-minute dashboard refresh
 - Green/Amber/Red risk and mission-confidence logic
+- Release 7 production-live candidate status with explicit final v1.0 gates
 
 ## Vercel environment variables
 
@@ -66,6 +73,7 @@ Copy `.env.example` into Vercel Project Settings -> Environment Variables.
 
 ```bash
 npm install
+npm test
 npm run build
 npm start
 ```
