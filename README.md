@@ -32,6 +32,12 @@ Release 5 adds the `/nova-intelligence` readiness surface for multi-device sync,
 
 See `docs/NOVA_RELEASE_5_NOVA_INTELLIGENCE.md` for boundaries and verification notes.
 
+## NOVA Release 6 Production Readiness
+
+Release 6 adds the `/production-readiness` readiness surface for release gates, integration health, fallback verification, notification safety, rollback posture, privacy controls, and planned-versus-actual commute accuracy. It keeps NOVA as a launch candidate without declaring v1.0 ready while manual proof points remain open.
+
+See `docs/NOVA_RELEASE_6_PRODUCTION_READINESS.md` for boundaries and verification notes.
+
 ## What works now
 
 - Mobile-first Next.js PWA dashboard
