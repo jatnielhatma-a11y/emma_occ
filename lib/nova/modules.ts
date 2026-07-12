@@ -1,4 +1,4 @@
-export type NovaReleaseId = 1 | 2 | 3 | 4 | 5 | 6;
+export type NovaReleaseId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export type NovaModuleStatus = "active" | "foundation" | "planned";
 
@@ -329,6 +329,42 @@ export const NOVA_RELEASES: NovaRelease[] = [
         summary: "Tracks planned-versus-actual commute outcomes so NOVA can improve warnings without silently changing duties.",
         capabilities: ["Planned-versus-actual commute accuracy", "Delayed departure review", "Missed-train review", "Manual outcome labels"],
         privacyNotes: ["Accuracy records are user-owned, deletable, and do not require continuous background GPS."]
+      }
+    ]
+  },
+  {
+    id: 7,
+    name: "Release 7",
+    title: "Production Hardening and Launch",
+    status: "active",
+    goal: "Certify NOVA for production deployment with live integration checks, rollback rehearsal, device validation, accessibility, performance, and operational runbooks.",
+    modules: [
+      {
+        id: "launch-certification",
+        name: "Launch Certification",
+        release: 7,
+        status: "active",
+        summary: "Tracks the final v1.0 gate across tests, builds, live health, fallback behavior, notification behavior, and deployment status.",
+        capabilities: ["v1.0 release gate", "Production deployment", "Live health validation", "Fallback verification", "Notification verification"],
+        privacyNotes: ["Launch status records evidence and gate labels only; private data remains behind user-scoped controls."]
+      },
+      {
+        id: "device-accessibility-performance",
+        name: "Device, Accessibility, and Performance",
+        release: 7,
+        status: "foundation",
+        summary: "Separates real iPhone, Android, desktop, installed PWA, accessibility, performance, and battery checks from automated build gates.",
+        capabilities: ["iPhone validation", "Android validation", "Installed PWA validation", "Accessibility testing", "Performance testing", "GPS battery review"],
+        privacyNotes: ["Battery and device validation must not require continuous background location tracking."]
+      },
+      {
+        id: "production-operations",
+        name: "Production Operations",
+        release: 7,
+        status: "active",
+        summary: "Keeps rollback, backup/recovery, release notes, and integration-failure runbooks visible before and after deployment.",
+        capabilities: ["Rollback rehearsal", "Backup and recovery", "Release notes", "Integration failure runbooks", "Production monitoring"],
+        privacyNotes: ["Operational runbooks must not contain secrets, tokens, or raw personal records."]
       }
     ]
   }

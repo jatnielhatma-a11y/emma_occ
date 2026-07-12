@@ -4,3 +4,7 @@ outputs
 work
 .env.local
 *.tsbuildinfo
+app/**/page 2.tsx
+components/**/* 2.tsx
+public/brand/* 2.png
+public/brand/* 3.png

@@ -38,6 +38,12 @@ Release 6 adds `/production-readiness` for release gates, live integration healt
 
 See `docs/nova-release-6-production-readiness.md` for the implementation notes, Supabase migration, and launch guardrails.
 
+## NOVA Release 7 Production Hardening and Launch
+
+Release 7 turns the launch surface into final production certification. It tracks automated tests, production build, e2e gates, live integration health, fallback behavior, notifications, security, privacy, rollback rehearsal, real-device/PWA checks, accessibility, performance, backup recovery, release notes, and production deployment status.
+
+See `docs/nova-release-7-production-launch.md` for the launch checklist, deployment notes, and v1.0 release gate.
+
 ## Phase 1 Scope
 
 Built in this phase:
