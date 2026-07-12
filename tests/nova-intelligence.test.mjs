@@ -43,13 +43,12 @@ test('Release 4 intelligence readiness tracks active layers', () => {
   assert.equal(readiness.automationStatus, 'approval-required');
 });
 
-test('Release 4 is active while Release 5 remains planned', () => {
+test('Release 4 and Release 5 are active', () => {
   const { novaReleases, plannedNovaModules } = loadTsModule('src/lib/nova/foundation.ts');
-  const plannedIds = new Set(plannedNovaModules().map((module) => module.id));
 
   assert.equal(novaReleases.find((release) => release.id === 4)?.status, 'active');
-  assert.equal(novaReleases.find((release) => release.id === 5)?.status, 'planned');
-  assert.equal(plannedIds.has('nova-intelligence'), true);
+  assert.equal(novaReleases.find((release) => release.id === 5)?.status, 'active');
+  assert.equal(plannedNovaModules().length, 0);
 });
 
 test('Release 4 automation guardrails require confirmation', () => {
