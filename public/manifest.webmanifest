@@ -1,10 +1,17 @@
 {
-  "name": "Emma OCC",
-  "short_name": "Emma OCC",
-  "description": "Personal Operations Control Center",
-  "start_url": "/",
+  "name": "NOVA Operations Platform",
+  "short_name": "NOVA",
+  "description": "Family focused enterprise monitoring and mission assistant for duties, commute, alerts, and learning.",
+  "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#08101f",
-  "theme_color": "#08101f",
-  "icons": [{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "background_color": "#03070d",
+  "theme_color": "#35d9ff",
+  "icons": [
+    {
+      "src": "/brand/emma-occ-badge.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }

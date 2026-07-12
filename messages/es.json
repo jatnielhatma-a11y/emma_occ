@@ -1,0 +1,57 @@
+{
+  "product": {
+    "name": "NOVA",
+    "subtitle": "Asistente de mision",
+    "module": "Control familiar de mision"
+  },
+  "nav": {
+    "missionControl": "Control central",
+    "platform": "Plataforma",
+    "occ": "OCC",
+    "calendar": "Calendario",
+    "commute": "Trayecto",
+    "traffic": "Trafico",
+    "notifications": "Alertas",
+    "email": "Correo",
+    "tasks": "Tareas",
+    "analytics": "Analitica",
+    "settings": "Ajustes"
+  },
+  "shell": {
+    "signedIn": "Sesion iniciada",
+    "language": "Idioma",
+    "localTime": "Local",
+    "utcTime": "UTC"
+  },
+  "language": {
+    "english": "Ingles",
+    "spanish": "Espanol",
+    "french": "Frances"
+  },
+  "location": {
+    "title": "Permiso de ubicacion",
+    "unknown": "No solicitado",
+    "granted": "Concedido",
+    "denied": "Denegado",
+    "prompt": "Permiso necesario",
+    "request": "Activar una vez",
+    "helper": "NOVA solo consulta la ubicacion despues de tu permiso explicito."
+  },
+  "modules": {
+    "phaseOne": "Modulo base de fase 1",
+    "traffic": "Inteligencia de trafico",
+    "trafficDetail": "Las interfaces de proveedores estan listas. Las fuentes de trafico en vivo llegan en la fase 4.",
+    "email": "Correo",
+    "emailDetail": "La clasificacion de Gmail en modo solo lectura esta prevista para la fase 2.",
+    "tasks": "Tareas",
+    "tasksDetail": "La captura de tareas y las notificaciones se ampliaran en fases posteriores.",
+    "analytics": "Analitica",
+    "analyticsDetail": "El historial de misiones y tendencias esta previsto para la fase 6.",
+    "commute": "Trayecto",
+    "commuteDetail": "La logica de trayecto de Emma OCC esta activa; las preferencias de ruta se ampliaran en la fase 2."
+  },
+  "settings": {
+    "languageTitle": "Idioma y accesibilidad",
+    "languageDetail": "Elige el idioma de NOVA para la interfaz y los modulos de fase 1."
+  }
+}

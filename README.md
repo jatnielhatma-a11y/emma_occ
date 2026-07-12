@@ -1,43 +1,155 @@
-# Emma OCC v4.1
+# Emma OCC Dashboard v3
 
-Operational core for roster, commute execution, weather risk, Gmail attention items, and decision support.
+Professional operations control dashboard for airline/rail-style roster monitoring, duty classification, conflict detection, and calendar-ready schedule management.
 
-## What works now
+## NOVA Release 1 Foundation
 
-- Mobile-first Next.js PWA dashboard
-- Server-side `/api/ops` aggregation endpoint
-- Roster classification for Late Shift, Night Shift, OFF Day, and Vacation
-- Google Maps Routes API walking calculations when configured
-- NS journey, platform, delay, and cancellation integration when configured
-- Live no-key weather integration using Open-Meteo
-- Google Calendar and Gmail OAuth integration when configured
-- Explicit fallback mode when credentials are unavailable
-- Five-minute dashboard refresh
-- Green/Amber/Red risk and mission-confidence logic
+Emma OCC is now preserved as the active operations module inside the NOVA personal operating system foundation. Release 1 adds a module registry, roadmap guardrails, and a protected Platform page at `/platform` while keeping later releases planned only.
 
-## Vercel environment variables
+See `docs/nova-release-1-foundation.md` for the audit, architecture notes, and PR checklist.
 
-Copy `.env.example` into Vercel Project Settings → Environment Variables.
+## Phase 1 Scope
 
-- `GOOGLE_ACCESS_TOKEN`: OAuth access token with Calendar and Gmail scopes
-- `GOOGLE_CALENDAR_ID`: normally `primary`
-- `GOOGLE_MAPS_API_KEY`: server-side Routes API key
-- `NS_API_KEY`: NS Reisinformatie API subscription key
-- `NS_TRIPS_BASE_URL`: optional override
-- `GMAIL_QUERY`: optional Gmail search query
+Built in this phase:
 
-## Commands
+- Supabase schema for profiles, rosters, imports, duties, calendar sync logs, commute settings, conflict logs, AI queries, and user settings.
+- Row-level security policies so every table is scoped to the authenticated user.
+- Login and registration screens using Supabase Auth.
+- Protected dashboard routes with an OCC-style sidebar and mobile navigation.
+- Dashboard panels for today's duty, next duty, weekly overview, roster counts, import status, conflict status, and Emma AI placement.
+- Roster import flow for CSV, Excel, text-based PDF, and validated image uploads.
+- Shared roster engine for duty labeling, overnight handling, OFF day detection, conflict detection, import comparison, and calendar idempotency fingerprints.
+- Demo CSV, optional seed SQL, and basic tests for roster rules.
+
+Image OCR, Google Calendar OAuth/writeback, editable settings controls, and the live Emma AI endpoint are intentionally staged for the next phases.
+
+## Phase 2 Scope
+
+Added in phase 2:
+
+- Google Calendar OAuth start/callback routes.
+- Calendar sync planning and writeback endpoint for duties and commute blocks.
+- Duplicate-safe event keys stored in Google Calendar private extended properties and Supabase sync logs.
+- Amsterdam-time calendar payloads for roster duties, commute blocks, and all-day OFF events.
+- Editable commute buffer settings.
+- Emma AI chat panel backed only by roster and conflict data, with an OpenAI Responses API path when `OPENAI_API_KEY` is configured and a deterministic fallback when it is not.
+- Live demo support for weather, NS status, and read-only session calendar data.
+- Editable Sick-leave / SL duty marking, fixed 8h05m duty accounting, and vacation totals up to the current day.
+
+## Phase 3 Scope
+
+Added in phase 3:
+
+- Roster screenshot/image OCR through the OpenAI Responses API when `OPENAI_API_KEY` is configured.
+- Manual pasted roster text import for OCR fallback and copied roster data.
+- Structured OCR prompt that converts roster screenshots into the standard roster CSV fields.
+- Calendar sync preview showing create/update action, event color, time window, and event summary before sync.
+- Google Calendar color mapping for night, late, OFF, custom, and commute events.
+- NS live reference as a commute source, attached to commute blocks and visible in settings/sync preview.
+- NS commute alert checks for configured home/work stations, platform-change language, disruption/works language, and unavailable status checks.
+- Ranked live commuting options that prefer NS when the route is clear, then lift 9292 and Google Transit alternatives when NS needs attention.
+- Hourly Google Calendar refresh through Vercel Cron and an actual live Amsterdam-time clock on the dashboard.
+
+## Local Setup
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Copy `.env.example` to `.env.local` and add Supabase keys:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. In Supabase, run:
+
+   ```text
+   supabase/schema.sql
+   ```
+
+4. Start the app:
+
+   ```bash
+   npm run dev
+   ```
+
+5. Open `http://localhost:3000`, register, then import `data/demo-roster.csv`.
+
+## Supabase Notes
+
+- `profiles`, `user_settings`, and `commute_settings` are created automatically when a new Supabase Auth user signs up.
+- Commute settings support manual buffers or NS live reference mode.
+- The live commute card compares NS planner links, 9292 public transport, Google Transit, driving, and cycling routes for both work and home directions. Door-to-door Google route links can use full home/work addresses while NS alerts stay station-based.
+- All operational data tables include `user_id` and RLS policies using `auth.uid()`.
+- Each duty belongs to a user and an import batch through `import_id`.
+- The import API stores the comparison summary before calendar sync, so users can confirm changes in a later phase.
+
+## Roster Import Rules
+
+- `23:00-07:05` becomes `Night Shift`.
+- `15:00-23:05` becomes `Late Shift`.
+- `-`, `Rest`, or an empty duty becomes `OFF Day`.
+- Any duty whose end time is before or equal to its start time is treated as overnight.
+- The original duty code is preserved separately from the derived duty label.
+
+## Verification
+
+Run the roster logic tests:
 
 ```bash
-npm install
-npm run build
-npm start
+npm test
 ```
 
-## Security
+When dependencies are installed, also run:
 
-All credentials are server-only. Do not prefix secrets with `NEXT_PUBLIC_`.
+```bash
+npm run typecheck
+npm run build
+```
 
-## Data behavior
+## Deployment
 
-Live providers are used when credentials are configured. If a provider is unavailable, Emma OCC clearly labels the source as fallback and keeps the dashboard operational instead of crashing.
+The app is Vercel-ready. Production deployments need these environment variables:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+OPENAI_API_KEY
+OPENAI_OCR_MODEL
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+GOOGLE_REDIRECT_URI
+NEXT_PUBLIC_APP_URL
+APP_TIMEZONE
+CRON_SECRET
+```
+
+`CRON_SECRET` is recommended for protecting the hourly calendar refresh endpoint. Vercel Cron will call `/api/cron/calendar-sync` every hour.
+
+Optional local-only demo variables:
+
+```text
+DEMO_LOGIN_EMAIL
+DEMO_LOGIN_PASSWORD
+LIVE_DEMO_CALENDAR_JSON
+WEATHER_LOCATION
+COMMUTE_HOME_ADDRESS
+COMMUTE_WORK_ADDRESS
+NS_HOME_STATION
+NS_WORK_STATION
+```
+
+Do not store private calendar snapshots in project files. Use OAuth-backed calendar access for production.
+
+## Next Phase
+
+Recommended next build slice:
+
+- Production OAuth setup with real Supabase, Google, and OpenAI environment variables.
+- Deployment after explicit production approval.
+- Manual duty-label editing and richer schedule table views.

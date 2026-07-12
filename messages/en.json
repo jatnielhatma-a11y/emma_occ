@@ -1,0 +1,57 @@
+{
+  "product": {
+    "name": "NOVA",
+    "subtitle": "Mission Assistant",
+    "module": "Family Mission Control"
+  },
+  "nav": {
+    "missionControl": "Mission Control",
+    "platform": "Platform",
+    "occ": "OCC",
+    "calendar": "Calendar",
+    "commute": "Commute",
+    "traffic": "Traffic",
+    "notifications": "Alerts",
+    "email": "Email",
+    "tasks": "Tasks",
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
+  "shell": {
+    "signedIn": "Signed in",
+    "language": "Language",
+    "localTime": "Local",
+    "utcTime": "UTC"
+  },
+  "language": {
+    "english": "English",
+    "spanish": "Spanish",
+    "french": "French"
+  },
+  "location": {
+    "title": "Location permission",
+    "unknown": "Not requested",
+    "granted": "Granted",
+    "denied": "Denied",
+    "prompt": "Permission needed",
+    "request": "Enable once",
+    "helper": "NOVA only checks location after explicit permission."
+  },
+  "modules": {
+    "phaseOne": "Phase 1 module shell",
+    "traffic": "Traffic Intelligence",
+    "trafficDetail": "Provider interfaces are ready. Live traffic sources arrive in Phase 4.",
+    "email": "Email",
+    "emailDetail": "Gmail read-only triage is planned for Phase 2.",
+    "tasks": "Tasks",
+    "tasksDetail": "Task capture and notification routing are planned for later phases.",
+    "analytics": "Analytics",
+    "analyticsDetail": "Mission history and trend analytics are planned for Phase 6.",
+    "commute": "Commute",
+    "commuteDetail": "Emma OCC commute logic is active; route preferences expand in Phase 2."
+  },
+  "settings": {
+    "languageTitle": "Language and accessibility",
+    "languageDetail": "Choose the NOVA interface language for shell and Phase 1 modules."
+  }
+}
