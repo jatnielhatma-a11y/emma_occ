@@ -3,7 +3,7 @@ import { AiAssistantPanel } from "@/components/dashboard/AiAssistantPanel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function EmmaAiPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

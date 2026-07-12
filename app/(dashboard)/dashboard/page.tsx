@@ -73,7 +73,7 @@ function calendarSourceLabel(latestImport?: LatestImport | null) {
 }
 
 export default async function DashboardPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

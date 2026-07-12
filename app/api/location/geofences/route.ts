@@ -51,7 +51,7 @@ function defaultSavedLocations(userId: string) {
   ];
 }
 
-async function ensureDefaultLocations(supabase: ReturnType<typeof createSupabaseServerClient>, userId: string) {
+async function ensureDefaultLocations(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, userId: string) {
   const { count } = await supabase
     .from("saved_locations")
     .select("id", { count: "exact", head: true })
@@ -64,7 +64,7 @@ async function ensureDefaultLocations(supabase: ReturnType<typeof createSupabase
 }
 
 export async function GET() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -101,7 +101,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

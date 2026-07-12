@@ -6,7 +6,7 @@ import { hasGoogleTokenEncryptionKey } from "@/lib/google/token-crypto";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function EmailPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

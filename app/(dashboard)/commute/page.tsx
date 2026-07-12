@@ -21,7 +21,7 @@ function phaseLabel(value?: string | null) {
 }
 
 export default async function CommutePage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

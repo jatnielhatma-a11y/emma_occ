@@ -29,7 +29,7 @@ function cookieOptions() {
 }
 
 export async function GET(request: Request) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -45,9 +45,10 @@ export async function GET(request: Request) {
   const state = base64UrlRandom(24);
   const verifier = base64UrlRandom(64);
   const stateHash = hashOAuthState(state);
+  const cookieStore = await cookies();
 
-  cookies().set(STATE_COOKIE, stateHash, cookieOptions());
-  cookies().set(VERIFIER_COOKIE, verifier, cookieOptions());
+  cookieStore.set(STATE_COOKIE, stateHash, cookieOptions());
+  cookieStore.set(VERIFIER_COOKIE, verifier, cookieOptions());
 
   try {
     await supabase.from("integration_metadata").upsert(

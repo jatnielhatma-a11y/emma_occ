@@ -2,7 +2,7 @@ import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function ConflictsPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

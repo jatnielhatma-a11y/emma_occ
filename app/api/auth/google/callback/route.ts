@@ -20,7 +20,7 @@ function statusRedirect(request: NextRequest, status: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -32,8 +32,9 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const error = request.nextUrl.searchParams.get("error");
-  const expectedStateHash = cookies().get(STATE_COOKIE)?.value;
-  const verifier = cookies().get(VERIFIER_COOKIE)?.value;
+  const cookieStore = await cookies();
+  const expectedStateHash = cookieStore.get(STATE_COOKIE)?.value;
+  const verifier = cookieStore.get(VERIFIER_COOKIE)?.value;
 
   if (error) {
     return statusRedirect(request, error === "access_denied" ? "access_denied" : "token_error");
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
     return statusRedirect(request, "token_error");
   }
 
-  cookies().delete(STATE_COOKIE);
-  cookies().delete(VERIFIER_COOKIE);
+  cookieStore.delete(STATE_COOKIE);
+  cookieStore.delete(VERIFIER_COOKIE);
   return statusRedirect(request, "connected");
 }

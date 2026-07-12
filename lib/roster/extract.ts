@@ -143,7 +143,7 @@ export async function extractRosterFile(file: File): Promise<ExtractRosterResult
   }
 
   if (XLSX_TYPES.has(file.type) || /\.(xlsx|xls)$/i.test(file.name)) {
-    const XLSX = await import("xlsx");
+    const XLSX = await import("@e965/xlsx");
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array" });
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];

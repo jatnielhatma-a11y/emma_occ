@@ -48,7 +48,7 @@ function toConflictInsert(userId: string, importId: string, conflict: RosterConf
 }
 
 export async function POST(request: Request) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

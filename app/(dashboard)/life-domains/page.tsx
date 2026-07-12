@@ -12,7 +12,7 @@ const domainCards: Array<{ domain: LifeDomain; label: string; icon: typeof Landm
   { domain: "learning", label: "Learning", icon: BookOpen }
 ];
 
-async function countDomain(supabase: ReturnType<typeof createSupabaseServerClient>, userId: string | undefined, domain: LifeDomain) {
+async function countDomain(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, userId: string | undefined, domain: LifeDomain) {
   if (!userId) return 0;
   const { count } = await supabase
     .from("nova_life_domain_records")
@@ -24,7 +24,7 @@ async function countDomain(supabase: ReturnType<typeof createSupabaseServerClien
 }
 
 export default async function LifeDomainsPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

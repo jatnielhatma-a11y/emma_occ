@@ -48,9 +48,9 @@ function normalizeDuty(row: any) {
 }
 
 type CalendarSyncPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     google?: string;
-  };
+  }>;
 };
 
 function googleStatusMessage(status?: string) {
@@ -98,7 +98,8 @@ function googleStatusMessage(status?: string) {
 }
 
 export default async function CalendarSyncPage({ searchParams }: CalendarSyncPageProps) {
-  const supabase = createSupabaseServerClient();
+  const resolvedSearchParams = await searchParams;
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -143,7 +144,7 @@ export default async function CalendarSyncPage({ searchParams }: CalendarSyncPag
         }
       )
     : null;
-  const googleStatus = googleStatusMessage(searchParams?.google);
+  const googleStatus = googleStatusMessage(resolvedSearchParams?.google);
   const grantedScopes = connection?.granted_scopes || connection?.scope || "";
   const googleServices = connection?.connected_services ?? googleServicesFromScope(grantedScopes);
   const googleConnected = Boolean(connection && !connection.disconnected_at);
@@ -157,7 +158,7 @@ export default async function CalendarSyncPage({ searchParams }: CalendarSyncPag
               <h2 className="text-base font-semibold text-white">{googleStatus.title}</h2>
               <p className="mt-1 text-sm text-zinc-400">{googleStatus.detail}</p>
             </div>
-            <StatusBadge tone={googleStatus.tone}>{searchParams?.google}</StatusBadge>
+            <StatusBadge tone={googleStatus.tone}>{resolvedSearchParams?.google}</StatusBadge>
           </div>
         </section>
       ) : null}

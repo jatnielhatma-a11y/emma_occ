@@ -10,14 +10,14 @@ import {
 } from "@/lib/nova/personal-core";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-async function countRows(supabase: ReturnType<typeof createSupabaseServerClient>, table: string, userId?: string) {
+async function countRows(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, table: string, userId?: string) {
   if (!userId) return 0;
   const { count } = await supabase.from(table).select("id", { count: "exact", head: true }).eq("user_id", userId);
   return count ?? 0;
 }
 
 export default async function PersonalCorePage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

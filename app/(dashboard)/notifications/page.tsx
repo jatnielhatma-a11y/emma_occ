@@ -2,7 +2,7 @@ import { NotificationCenter } from "@/components/notifications/NotificationCente
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function NotificationsPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
