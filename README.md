@@ -14,6 +14,12 @@ Release 2 adds the protected `/personal-core` surface for personal identity, opt
 
 See `docs/nova-release-2-personal-core.md` for the implementation notes, Supabase migration, and privacy guardrails.
 
+## NOVA Release 3 Life Domains
+
+Release 3 adds `/life-domains` for finance, home, travel, health, and learning records. The domain layer is manual, user-scoped, and privacy-labeled; it does not connect banks, diagnose health, or change Emma OCC commute behavior.
+
+See `docs/nova-release-3-life-domains.md` for the implementation notes, Supabase migration, and Release 4 boundary.
+
 ## Phase 1 Scope
 
 Built in this phase:

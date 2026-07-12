@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bell, CalendarClock, CheckSquare, Fingerprint, Gauge, Inbox, LayoutDashboard, Network, Route, Settings, TrafficCone } from "lucide-react";
+import { BarChart3, Bell, CalendarClock, CheckSquare, Fingerprint, Gauge, HeartHandshake, Inbox, LayoutDashboard, Network, Route, Settings, TrafficCone } from "lucide-react";
 import clsx from "clsx";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/dashboard", labelKey: "nav.missionControl", icon: LayoutDashboard },
   { href: "/platform", labelKey: "nav.platform", icon: Network },
   { href: "/personal-core", labelKey: "nav.personalCore", icon: Fingerprint },
+  { href: "/life-domains", labelKey: "nav.lifeDomains", icon: HeartHandshake },
   { href: "/dashboard#emma-occ", labelKey: "nav.occ", icon: Gauge },
   { href: "/calendar-sync", labelKey: "nav.calendar", icon: CalendarClock },
   { href: "/commute", labelKey: "nav.commute", icon: Route },
