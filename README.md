@@ -20,6 +20,12 @@ Release 3 adds the `/life-domains` readiness surface for finance, home, travel, 
 
 See `docs/NOVA_RELEASE_3_LIFE_DOMAINS.md` for boundaries and verification notes.
 
+## NOVA Release 4 Intelligence and Automation
+
+Release 4 adds the `/intelligence` readiness surface for predictions, recommendations, context signals, automation-rule candidates, and Daily AI routines. Automation remains disabled by default and requires explicit confirmation before any operational action.
+
+See `docs/NOVA_RELEASE_4_INTELLIGENCE_AUTOMATION.md` for boundaries and verification notes.
+
 ## What works now
 
 - Mobile-first Next.js PWA dashboard
