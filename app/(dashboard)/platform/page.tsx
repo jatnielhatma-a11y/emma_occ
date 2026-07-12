@@ -17,15 +17,15 @@ export default function PlatformPage() {
       <section className="nova-surface rounded-lg border border-occ-line p-5 shadow-nova">
         <div className="flex flex-wrap items-center gap-3">
           <StatusBadge tone={readiness === "Foundation ready" ? "green" : "amber"}>{readiness}</StatusBadge>
-          <StatusBadge tone="cyan">Release 1-3 active</StatusBadge>
+          <StatusBadge tone="cyan">Release 1-4 active</StatusBadge>
           <StatusBadge tone="neutral">Emma OCC preserved</StatusBadge>
         </div>
         <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.7fr]">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-occ-cyan">NOVA operating system</p>
-            <h1 className="mt-2 text-3xl font-semibold text-occ-platinum">Foundation, Personal Core, and Life Domains</h1>
+            <h1 className="mt-2 text-3xl font-semibold text-occ-platinum">Foundation, Personal Core, Life Domains, and Intelligence</h1>
             <p className="mt-3 max-w-3xl text-sm text-zinc-400">
-              Releases 1 through 3 establish NOVA as a modular personal operating system around the existing Emma OCC command center. Later releases stay marked as planned until their privacy, data, and reliability gates are implemented.
+              Releases 1 through 4 establish NOVA as a modular personal operating system around the existing Emma OCC command center. Release 5 stays marked as planned until its privacy, device, voice, vision, and collaboration gates are implemented.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">

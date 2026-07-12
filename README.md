@@ -20,6 +20,12 @@ Release 3 adds `/life-domains` for finance, home, travel, health, and learning r
 
 See `docs/nova-release-3-life-domains.md` for the implementation notes, Supabase migration, and Release 4 boundary.
 
+## NOVA Release 4 Intelligence and Automation
+
+Release 4 adds `/intelligence` for predictions, recommendations, context signals, automation-rule candidates, and Daily AI routines. Automation remains disabled by default and requires explicit confirmation before any operational action.
+
+See `docs/nova-release-4-intelligence-automation.md` for the implementation notes, Supabase migration, and Release 5 boundary.
+
 ## Phase 1 Scope
 
 Built in this phase:

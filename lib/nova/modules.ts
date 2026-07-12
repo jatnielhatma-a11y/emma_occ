@@ -174,16 +174,44 @@ export const NOVA_RELEASES: NovaRelease[] = [
     id: 4,
     name: "Release 4",
     title: "Intelligence and Automation",
-    status: "planned",
+    status: "active",
     goal: "Add prediction, recommendations, automation, context, and daily AI routines.",
     modules: [
       {
         id: "prediction-recommendation-engine",
         name: "Prediction and Recommendations",
         release: 4,
-        status: "planned",
+        status: "active",
         summary: "Personalized suggestions based on verified sources, confidence labels, and user consent.",
-        capabilities: ["Prediction", "Recommendations", "Context engine", "Automation", "Daily AI"]
+        capabilities: ["Prediction", "Recommendations", "Confidence labels", "Source attribution"],
+        privacyNotes: ["Release 4 recommendations are advisory and must show source freshness before action."]
+      },
+      {
+        id: "context-engine",
+        name: "Context Engine",
+        release: 4,
+        status: "active",
+        summary: "Connects operational, personal-core, and life-domain signals into a reviewable context layer.",
+        capabilities: ["Context signals", "Source freshness", "Fallback labeling", "Cross-domain readiness"],
+        privacyNotes: ["Context signals stay user-scoped and can be deleted with the underlying source records."]
+      },
+      {
+        id: "automation-guardrails",
+        name: "Automation Guardrails",
+        release: 4,
+        status: "foundation",
+        summary: "Automation rules are stored as disabled-by-default candidates that require explicit confirmation before action.",
+        capabilities: ["Automation candidates", "Manual approval", "Cooldown-aware actions", "No silent writes"],
+        privacyNotes: ["NOVA cannot mutate calendar, commute, email, memory, or notification state from Release 4 automation without user confirmation."]
+      },
+      {
+        id: "daily-ai-routines",
+        name: "Daily AI",
+        release: 4,
+        status: "active",
+        summary: "Daily AI routines use the existing OpenAI Responses API path with deterministic fallback and stored source labels.",
+        capabilities: ["Daily brief", "OpenAI Responses API", "Deterministic fallback", "Suppressed update tracking"],
+        privacyNotes: ["OpenAI calls use store=false and verified JSON context only."]
       }
     ]
   },
