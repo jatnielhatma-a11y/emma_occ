@@ -15,20 +15,21 @@ export default function PlatformPage() {
       <section className="panel full">
         <div className="mission-cluster" style={{ justifyContent: 'flex-start', marginBottom: 16 }}>
           <Badge tone={ready ? 'green' : 'amber'}>{ready ? 'Foundation ready' : 'Needs review'}</Badge>
-          <Badge>Release 1-4 active</Badge>
+          <Badge>Release 1-5 active</Badge>
           <Badge tone="green">Emma OCC preserved</Badge>
         </div>
         <p className="eyebrow">NOVA operating system</p>
-        <h1>Foundation, Personal Core, Life Domains, and Intelligence</h1>
+        <h1>Foundation, Personal Core, Life Domains, Intelligence, and NOVA</h1>
         <p>
-          Releases 1 through 4 keep Emma OCC as the active mission-control module while establishing the roadmap, privacy guardrails,
-          provider boundaries, identity layer, opt-in memory controls, life-domain context, and advisory intelligence layer.
+          Releases 1 through 5 keep Emma OCC as the active mission-control module while establishing the roadmap, privacy guardrails,
+          provider boundaries, identity layer, opt-in memory controls, life-domain context, advisory intelligence, and NOVA Intelligence.
         </p>
         <p style={{ marginTop: 16 }}>
           <Link className="connect-google" href="/">Return to Mission Control</Link>
           <Link className="connect-google" href="/personal-core" style={{ marginLeft: 10 }}>Open Personal Core</Link>
           <Link className="connect-google" href="/life-domains" style={{ marginLeft: 10 }}>Open Life Domains</Link>
           <Link className="connect-google" href="/intelligence" style={{ marginLeft: 10 }}>Open Intelligence</Link>
+          <Link className="connect-google" href="/nova-intelligence" style={{ marginLeft: 10 }}>Open NOVA</Link>
         </p>
       </section>
 
@@ -41,12 +42,12 @@ export default function PlatformPage() {
         <article className="panel metric">
           <div className="panel-title">Capability coverage</div>
           <h2>{summary.coveredCapabilityCount}/{summary.requiredCapabilityCount}</h2>
-          <p>Release 1 through 4 architecture requirements represented.</p>
+          <p>Release 1 through 5 architecture requirements represented.</p>
         </article>
         <article className="panel metric">
           <div className="panel-title">Planned modules</div>
           <h2>{summary.plannedModules.length}</h2>
-          <p>Future releases are not activated in this phase.</p>
+          <p>The roadmap is active through Release 5.</p>
         </article>
         <article className="panel metric">
           <div className="panel-title">Memory status</div>
