@@ -219,16 +219,62 @@ export const NOVA_RELEASES: NovaRelease[] = [
     id: 5,
     name: "Release 5",
     title: "NOVA Intelligence",
-    status: "planned",
+    status: "active",
     goal: "Add multi-device sync, voice, vision, collaboration, developer platform, and advanced NOVA intelligence.",
     modules: [
+      {
+        id: "multi-device-sync",
+        name: "Multi-device Sync",
+        release: 5,
+        status: "active",
+        summary: "Device-aware continuity for installed PWA, phone, and desktop contexts with user-scoped sync records.",
+        capabilities: ["Device registration", "Sync readiness", "PWA continuity", "Source freshness"],
+        privacyNotes: ["Device records are user-scoped and can be revoked without deleting Emma OCC data."]
+      },
+      {
+        id: "voice-interface",
+        name: "Voice",
+        release: 5,
+        status: "foundation",
+        summary: "Voice input and output readiness with consent, transcript control, and no always-listening behavior.",
+        capabilities: ["Voice consent", "Transcript review", "Push-to-talk boundary"],
+        privacyNotes: ["Voice remains explicit-session only; NOVA does not listen in the background."]
+      },
+      {
+        id: "vision-interface",
+        name: "Vision",
+        release: 5,
+        status: "foundation",
+        summary: "Vision readiness for user-submitted images, documents, and screenshots with reviewable extraction.",
+        capabilities: ["Image review", "Document extraction", "Vision consent", "Source attribution"],
+        privacyNotes: ["Images are user-submitted and reviewable before extracted context is stored."]
+      },
+      {
+        id: "collaboration-layer",
+        name: "Collaboration",
+        release: 5,
+        status: "foundation",
+        summary: "Family-focused collaboration boundaries for shared context without exposing private memory by default.",
+        capabilities: ["Family sharing", "Shared tasks", "Scoped collaboration", "Private-by-default memory"],
+        privacyNotes: ["Collaboration must never expose private memory, health, finance, or location records by default."]
+      },
+      {
+        id: "developer-platform",
+        name: "Developer Platform",
+        release: 5,
+        status: "foundation",
+        summary: "Extension registry and API-readiness layer for safe future integrations.",
+        capabilities: ["Extension registry", "Permission scopes", "Webhook readiness", "Audit trail"],
+        privacyNotes: ["Developer extensions require explicit scopes and cannot receive service-role secrets."]
+      },
       {
         id: "nova-intelligence-platform",
         name: "NOVA Intelligence",
         release: 5,
-        status: "planned",
-        summary: "Multi-modal and collaborative platform capabilities built on the privacy and integration foundations.",
-        capabilities: ["Multi-device sync", "Voice", "Vision", "Collaboration", "Developer platform", "NOVA Intelligence"]
+        status: "active",
+        summary: "A unified intelligence layer that coordinates operational, personal, life-domain, and advisory records.",
+        capabilities: ["Unified intelligence", "Cross-release context", "Privacy-first orchestration", "Mission assistant"],
+        privacyNotes: ["NOVA Intelligence coordinates existing approved context; it does not bypass Release 2-4 consent gates."]
       }
     ]
   }

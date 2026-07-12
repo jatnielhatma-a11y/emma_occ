@@ -60,16 +60,14 @@ test("foundation registry covers required integrations and platform capabilities
   assert.equal(getMissingFoundationCapabilities().length, 0);
 });
 
-test("future NOVA releases stay planned after Release 4 activation", () => {
+test("NOVA roadmap is active through Release 5", () => {
   const { NOVA_RELEASES, getPlannedNovaModules } = loadNovaModules();
-  const futureReleases = NOVA_RELEASES.filter((release) => release.id > 4);
-  const plannedModuleIds = new Set(getPlannedNovaModules().map((module) => module.id));
 
   assert.equal(NOVA_RELEASES.find((release) => release.id === 2)?.status, "active");
   assert.equal(NOVA_RELEASES.find((release) => release.id === 3)?.status, "active");
   assert.equal(NOVA_RELEASES.find((release) => release.id === 4)?.status, "active");
-  assert.ok(futureReleases.every((release) => release.status === "planned"));
-  assert.ok(plannedModuleIds.has("nova-intelligence-platform"));
+  assert.equal(NOVA_RELEASES.find((release) => release.id === 5)?.status, "active");
+  assert.equal(getPlannedNovaModules().length, 0);
 });
 
 test("foundation summary reports readiness with Emma OCC preserved", () => {

@@ -26,6 +26,12 @@ Release 4 adds `/intelligence` for predictions, recommendations, context signals
 
 See `docs/nova-release-4-intelligence-automation.md` for the implementation notes, Supabase migration, and Release 5 boundary.
 
+## NOVA Release 5 NOVA Intelligence
+
+Release 5 adds `/nova-intelligence` for multi-device sync, voice, vision, collaboration, developer-platform readiness, and unified NOVA Intelligence. Capabilities are consent-gated, scoped, and private by default.
+
+See `docs/nova-release-5-nova-intelligence.md` for the implementation notes, Supabase migration, and platform guardrails.
+
 ## Phase 1 Scope
 
 Built in this phase:
