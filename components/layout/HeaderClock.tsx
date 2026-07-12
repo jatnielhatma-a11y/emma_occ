@@ -6,9 +6,10 @@ import { useI18n } from "@/components/i18n/LanguageProvider";
 
 export function HeaderClock({ timeZone }: { timeZone: string }) {
   const { t, locale } = useI18n();
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
+    setNow(new Date());
     const interval = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(interval);
   }, []);
@@ -42,11 +43,11 @@ export function HeaderClock({ timeZone }: { timeZone: string }) {
         <div className="grid grid-cols-2 gap-3 font-mono text-xs text-zinc-300 sm:text-sm">
           <span>
             <span className="mr-1 font-sans text-[10px] uppercase tracking-[0.16em] text-zinc-500">{t("shell.localTime")}</span>
-            {localFormatter.format(now)}
+            {now ? localFormatter.format(now) : "--:--:--"}
           </span>
           <span>
             <span className="mr-1 font-sans text-[10px] uppercase tracking-[0.16em] text-zinc-500">{t("shell.utcTime")}</span>
-            {utcFormatter.format(now)}
+            {now ? utcFormatter.format(now) : "--:--:--"}
           </span>
         </div>
       </div>
