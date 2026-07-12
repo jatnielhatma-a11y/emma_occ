@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { buildProductionReadinessSummary, productionGateGuardrail, release6SeedRecords } from '@/lib/nova/production-readiness';
+import { buildRelease7LaunchSummary, launchCheckGuardrail, release7LaunchChecks } from '@/lib/nova/production-launch';
 
 function Badge({ children, tone = 'blue' }: { children: React.ReactNode; tone?: 'blue' | 'green' | 'amber' | 'red' }) {
   const value = tone === 'green' ? 'GREEN' : tone === 'amber' ? 'AMBER' : tone === 'red' ? 'RED' : 'LIVE';
@@ -9,22 +10,25 @@ function Badge({ children, tone = 'blue' }: { children: React.ReactNode; tone?: 
 export default function ProductionReadinessPage() {
   const records = release6SeedRecords();
   const summary = buildProductionReadinessSummary(records);
+  const launchChecks = release7LaunchChecks(process.env.VERCEL_ENV === 'production');
+  const launchSummary = buildRelease7LaunchSummary(launchChecks);
 
   return (
     <main className="shell">
       <section className="panel full">
         <div className="mission-cluster" style={{ justifyContent: 'flex-start', marginBottom: 16 }}>
-          <Badge tone="green">Release 6 active</Badge>
+          <Badge tone="green">Release 7 active</Badge>
+          <Badge tone={launchSummary.productionLive ? 'green' : 'amber'}>{launchSummary.status.replaceAll('-', ' ')}</Badge>
           <Badge tone={summary.launchStatus === 'launch-ready' ? 'green' : summary.launchStatus === 'blocked' ? 'red' : 'amber'}>
             {summary.launchStatus.replaceAll('-', ' ')}
           </Badge>
           <Badge>Emma OCC preserved</Badge>
         </div>
-        <p className="eyebrow">NOVA production readiness</p>
-        <h1>Release Gates, Monitoring, Rollback, Privacy, and Commute Accuracy</h1>
+        <p className="eyebrow">NOVA production launch</p>
+        <h1>Production Hardening, Launch Certification, and v1.0 Release Gates</h1>
         <p>
-          Release 6 hardens NOVA for daily operational use. Automated gates can pass while manual proof points like rollback rehearsal,
-          installed PWA behavior, and commute accuracy remain clearly labeled as follow-up before v1.0.
+          Release 7 makes NOVA production-live while keeping final v1.0 approval separate from manual proof points like rollback rehearsal,
+          real-device PWA behavior, accessibility, performance, backup recovery, and live integration observation.
         </p>
         <p style={{ marginTop: 16 }}>
           <Link className="connect-google" href="/">Return to Mission Control</Link>
@@ -35,25 +39,43 @@ export default function ProductionReadinessPage() {
 
       <section className="summary-grid" style={{ marginTop: 16 }}>
         <article className="panel metric">
-          <div className="panel-title">Gates covered</div>
-          <h2>{summary.coveredGateCount}/{summary.requiredGateCount}</h2>
-          <p>Production readiness gates represented.</p>
+          <div className="panel-title">Launch checks</div>
+          <h2>{launchSummary.coveredCheckCount}/{launchSummary.requiredCheckCount}</h2>
+          <p>Release 7 launch checks represented.</p>
         </article>
         <article className="panel metric">
-          <div className="panel-title">Records</div>
-          <h2>{summary.totalRecords}</h2>
-          <p>Seed records define the Release 6 launch boundary.</p>
+          <div className="panel-title">Production</div>
+          <h2>{launchSummary.productionLive ? 'Live' : 'Ready'}</h2>
+          <p>Production-live is allowed before final v1.0 approval.</p>
         </article>
         <article className="panel metric">
-          <div className="panel-title">Blockers</div>
-          <h2>{summary.blockers}</h2>
-          <p>No high or critical blocker is allowed before launch.</p>
+          <div className="panel-title">Follow-ups</div>
+          <h2>{launchSummary.manualChecks + launchSummary.warnings}</h2>
+          <p>Manual gates remain visible until proven.</p>
         </article>
         <article className="panel metric">
-          <div className="panel-title">Critical gates</div>
-          <h2>{summary.criticalPassed ? 'Passed' : 'Review'}</h2>
-          <p>Critical checks must pass before daily-use approval.</p>
+          <div className="panel-title">v1.0</div>
+          <h2>{launchSummary.v1Ready ? 'Ready' : 'Candidate'}</h2>
+          <p>NOVA v1.0 is not declared until every gate is verified.</p>
         </article>
+      </section>
+
+      <section className="content-grid" style={{ marginTop: 16 }}>
+        {launchChecks.map((record) => {
+          const guardrail = launchCheckGuardrail(record);
+          return (
+            <article className="panel" key={record.check}>
+              <div className="panel-title">{record.check.replaceAll('_', ' ')}</div>
+              <h2>{record.title}</h2>
+              <p>{record.detail}</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+                <Badge tone={record.status === 'passed' ? 'green' : record.status === 'blocked' ? 'red' : 'amber'}>{record.status}</Badge>
+                <Badge tone={guardrail.startsWith('verified') ? 'green' : guardrail === 'launch-blocker' ? 'red' : 'amber'}>{guardrail.replaceAll('-', ' ')}</Badge>
+                <Badge>{record.critical ? 'critical' : 'standard'}</Badge>
+              </div>
+            </article>
+          );
+        })}
       </section>
 
       <section className="content-grid" style={{ marginTop: 16 }}>
