@@ -26,6 +26,12 @@ Release 4 adds the `/intelligence` readiness surface for predictions, recommenda
 
 See `docs/NOVA_RELEASE_4_INTELLIGENCE_AUTOMATION.md` for boundaries and verification notes.
 
+## NOVA Release 5 NOVA Intelligence
+
+Release 5 adds the `/nova-intelligence` readiness surface for multi-device sync, voice, vision, collaboration, developer platform boundaries, and NOVA Intelligence orchestration. Voice and vision stay consent-gated, local-only records cannot sync, and developer access requires scoped privacy controls.
+
+See `docs/NOVA_RELEASE_5_NOVA_INTELLIGENCE.md` for boundaries and verification notes.
+
 ## What works now
 
 - Mobile-first Next.js PWA dashboard
