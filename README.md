@@ -14,6 +14,12 @@ Release 2 adds the `/personal-core` readiness surface for personal identity, opt
 
 See `docs/NOVA_RELEASE_2_PERSONAL_CORE.md` for privacy guardrails and verification notes.
 
+## NOVA Release 3 Life Domains
+
+Release 3 adds the `/life-domains` readiness surface for finance, home, travel, health, and learning architecture. The domain layer is manual, privacy-labeled, and does not connect banks, diagnose health, or change Emma OCC commute behavior.
+
+See `docs/NOVA_RELEASE_3_LIFE_DOMAINS.md` for boundaries and verification notes.
+
 ## What works now
 
 - Mobile-first Next.js PWA dashboard
