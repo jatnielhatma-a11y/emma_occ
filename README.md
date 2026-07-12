@@ -8,6 +8,12 @@ Emma OCC is preserved as the active operations module inside the NOVA personal o
 
 See `docs/NOVA_RELEASE_1_FOUNDATION.md` for the audit, architecture notes, and merge checklist.
 
+## NOVA Release 2 Personal Core
+
+Release 2 adds the `/personal-core` readiness surface for personal identity, opt-in memory, interests, goals, habits, relationships, and timeline architecture. Memory is disabled by default and AI-suggested memories require separate permission.
+
+See `docs/NOVA_RELEASE_2_PERSONAL_CORE.md` for privacy guardrails and verification notes.
+
 ## What works now
 
 - Mobile-first Next.js PWA dashboard
