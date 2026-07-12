@@ -32,6 +32,12 @@ Release 5 adds `/nova-intelligence` for multi-device sync, voice, vision, collab
 
 See `docs/nova-release-5-nova-intelligence.md` for the implementation notes, Supabase migration, and platform guardrails.
 
+## NOVA Release 6 Production Readiness
+
+Release 6 adds `/production-readiness` for release gates, live integration health, fallback verification, notification safety, rollback posture, privacy controls, and planned-versus-actual commute accuracy. It keeps NOVA honest as a launch candidate without declaring v1.0 ready while manual launch gates remain open.
+
+See `docs/nova-release-6-production-readiness.md` for the implementation notes, Supabase migration, and launch guardrails.
+
 ## Phase 1 Scope
 
 Built in this phase:

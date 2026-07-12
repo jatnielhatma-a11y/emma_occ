@@ -15,6 +15,7 @@ import {
   Inbox,
   LayoutDashboard,
   Network,
+  Rocket,
   Route,
   Settings,
   TrafficCone
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/life-domains", labelKey: "nav.lifeDomains", icon: HeartHandshake },
   { href: "/intelligence", labelKey: "nav.intelligence", icon: BrainCircuit },
   { href: "/nova-intelligence", labelKey: "nav.novaIntelligence", icon: Cpu },
+  { href: "/production-readiness", labelKey: "nav.productionReadiness", icon: Rocket },
   { href: "/dashboard#emma-occ", labelKey: "nav.occ", icon: Gauge },
   { href: "/calendar-sync", labelKey: "nav.calendar", icon: CalendarClock },
   { href: "/commute", labelKey: "nav.commute", icon: Route },
