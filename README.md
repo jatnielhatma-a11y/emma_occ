@@ -8,6 +8,12 @@ Emma OCC is now preserved as the active operations module inside the NOVA person
 
 See `docs/nova-release-1-foundation.md` for the audit, architecture notes, and PR checklist.
 
+## NOVA Release 2 Personal Core
+
+Release 2 adds the protected `/personal-core` surface for personal identity, opt-in memory consent, interests, goals, habits, relationships, and timeline capture. Memory is disabled by default and AI-suggested memories require separate permission.
+
+See `docs/nova-release-2-personal-core.md` for the implementation notes, Supabase migration, and privacy guardrails.
+
 ## Phase 1 Scope
 
 Built in this phase:

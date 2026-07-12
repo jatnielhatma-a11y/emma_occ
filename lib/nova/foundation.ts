@@ -19,7 +19,8 @@ export function buildNovaFoundationSummary() {
     coveredCapabilityCount: REQUIRED_FOUNDATION_CAPABILITIES.length - missingCapabilities.length,
     missingCapabilities,
     emmaOccPreserved: activeModules.some((module) => module.id === "emma-occ" && module.preservesEmmaOcc),
-    futureReleases: NOVA_RELEASES.filter((release) => release.id > 1)
+    activeReleases: NOVA_RELEASES.filter((release) => release.status === "active"),
+    futureReleases: NOVA_RELEASES.filter((release) => release.status === "planned")
   };
 }
 

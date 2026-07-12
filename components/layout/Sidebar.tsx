@@ -7,6 +7,7 @@ import {
   CalendarClock,
   CheckSquare,
   Bell,
+  Fingerprint,
   Gauge,
   Inbox,
   LayoutDashboard,
@@ -22,6 +23,7 @@ import { useI18n } from "@/components/i18n/LanguageProvider";
 const navItems = [
   { href: "/dashboard", labelKey: "nav.missionControl", icon: LayoutDashboard },
   { href: "/platform", labelKey: "nav.platform", icon: Network },
+  { href: "/personal-core", labelKey: "nav.personalCore", icon: Fingerprint },
   { href: "/dashboard#emma-occ", labelKey: "nav.occ", icon: Gauge },
   { href: "/calendar-sync", labelKey: "nav.calendar", icon: CalendarClock },
   { href: "/commute", labelKey: "nav.commute", icon: Route },

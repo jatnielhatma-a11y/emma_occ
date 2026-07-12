@@ -17,15 +17,15 @@ export default function PlatformPage() {
       <section className="nova-surface rounded-lg border border-occ-line p-5 shadow-nova">
         <div className="flex flex-wrap items-center gap-3">
           <StatusBadge tone={readiness === "Foundation ready" ? "green" : "amber"}>{readiness}</StatusBadge>
-          <StatusBadge tone="cyan">Release 1 only</StatusBadge>
+          <StatusBadge tone="cyan">Release 1-2 active</StatusBadge>
           <StatusBadge tone="neutral">Emma OCC preserved</StatusBadge>
         </div>
         <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.7fr]">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-occ-cyan">NOVA operating system</p>
-            <h1 className="mt-2 text-3xl font-semibold text-occ-platinum">Foundation Architecture</h1>
+            <h1 className="mt-2 text-3xl font-semibold text-occ-platinum">Foundation and Personal Core</h1>
             <p className="mt-3 max-w-3xl text-sm text-zinc-400">
-              Release 1 establishes NOVA as a modular personal operating system around the existing Emma OCC command center. Later releases stay marked as planned until their privacy, data, and reliability gates are implemented.
+              Releases 1 and 2 establish NOVA as a modular personal operating system around the existing Emma OCC command center. Later releases stay marked as planned until their privacy, data, and reliability gates are implemented.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
@@ -58,8 +58,8 @@ export default function PlatformPage() {
 
       <section className="space-y-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-occ-gold">Release 1</p>
-          <h2 className="text-2xl font-semibold text-white">Active Foundation Modules</h2>
+          <p className="text-xs uppercase tracking-[0.18em] text-occ-gold">Active releases</p>
+          <h2 className="text-2xl font-semibold text-white">Active NOVA Modules</h2>
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           {summary.activeModules.map((module) => (

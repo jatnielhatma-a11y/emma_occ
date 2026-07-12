@@ -85,33 +85,35 @@ export const NOVA_RELEASES: NovaRelease[] = [
     id: 2,
     name: "Release 2",
     title: "Personal Core",
-    status: "planned",
+    status: "active",
     goal: "Add identity, memory, personal context, goals, habits, relationships, and a life timeline.",
     modules: [
       {
         id: "personal-identity",
         name: "Personal Identity",
         release: 2,
-        status: "planned",
+        status: "active",
         summary: "User profile, preferences, family context, and durable identity signals.",
-        capabilities: ["Personal profile", "Family context", "Preference graph"]
+        capabilities: ["Personal profile", "Family context", "Preference graph"],
+        privacyNotes: ["Identity data is user-scoped and editable before it can inform recommendations."]
       },
       {
         id: "privacy-first-memory",
         name: "Privacy-first Memory Engine",
         release: 2,
-        status: "planned",
+        status: "foundation",
         summary: "Opt-in, inspectable memory with deletion, scope controls, and source attribution.",
-        capabilities: ["Memory consent", "Memory review", "Memory deletion", "Source attribution"],
+        capabilities: ["Memory consent", "Memory review", "Memory deletion", "Source attribution", "Memory disabled by default"],
         privacyNotes: ["Memory must be user-visible, revocable, and never silently inferred into permanent storage."]
       },
       {
         id: "life-graph",
         name: "Interests, Goals, Habits, Relationships, Timeline",
         release: 2,
-        status: "planned",
+        status: "active",
         summary: "Personal planning data linked to daily operations without changing Emma OCC behavior.",
-        capabilities: ["Interests", "Goals", "Habits", "Relationships", "Timeline"]
+        capabilities: ["Interests", "Goals", "Habits", "Relationships", "Timeline"],
+        privacyNotes: ["Life-graph records remain manually curated in Release 2."]
       }
     ]
   },
