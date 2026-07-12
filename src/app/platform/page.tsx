@@ -15,18 +15,19 @@ export default function PlatformPage() {
       <section className="panel full">
         <div className="mission-cluster" style={{ justifyContent: 'flex-start', marginBottom: 16 }}>
           <Badge tone={ready ? 'green' : 'amber'}>{ready ? 'Foundation ready' : 'Needs review'}</Badge>
-          <Badge>Release 1-2 active</Badge>
+          <Badge>Release 1-3 active</Badge>
           <Badge tone="green">Emma OCC preserved</Badge>
         </div>
         <p className="eyebrow">NOVA operating system</p>
-        <h1>Foundation and Personal Core</h1>
+        <h1>Foundation, Personal Core, and Life Domains</h1>
         <p>
-          Releases 1 and 2 keep Emma OCC as the active mission-control module while establishing the roadmap, privacy guardrails,
-          provider boundaries, identity layer, and opt-in memory controls for the larger NOVA personal operating system.
+          Releases 1 through 3 keep Emma OCC as the active mission-control module while establishing the roadmap, privacy guardrails,
+          provider boundaries, identity layer, opt-in memory controls, and life-domain context for the larger NOVA personal operating system.
         </p>
         <p style={{ marginTop: 16 }}>
           <Link className="connect-google" href="/">Return to Mission Control</Link>
           <Link className="connect-google" href="/personal-core" style={{ marginLeft: 10 }}>Open Personal Core</Link>
+          <Link className="connect-google" href="/life-domains" style={{ marginLeft: 10 }}>Open Life Domains</Link>
         </p>
       </section>
 
@@ -39,7 +40,7 @@ export default function PlatformPage() {
         <article className="panel metric">
           <div className="panel-title">Capability coverage</div>
           <h2>{summary.coveredCapabilityCount}/{summary.requiredCapabilityCount}</h2>
-          <p>Release 1 and 2 architecture requirements represented.</p>
+          <p>Release 1 through 3 architecture requirements represented.</p>
         </article>
         <article className="panel metric">
           <div className="panel-title">Planned modules</div>
