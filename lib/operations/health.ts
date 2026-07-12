@@ -152,7 +152,7 @@ export async function buildProductionHealthReport(): Promise<ProductionHealthRep
     ok: status !== "down",
     status,
     checkedAt,
-    version: process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0-rc.1",
+    version: process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0-rc.2",
     checks,
     releaseGate: {
       monitoringReady: true,
