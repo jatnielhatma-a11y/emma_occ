@@ -1,4 +1,4 @@
-export type NovaReleaseId = 1 | 2 | 3 | 4 | 5;
+export type NovaReleaseId = 1 | 2 | 3 | 4 | 5 | 6;
 
 export type NovaModuleStatus = 'active' | 'foundation' | 'planned';
 
@@ -261,6 +261,60 @@ export const novaReleases: NovaRelease[] = [
         summary: 'Unified intelligence layer joining Emma OCC, personal core, life domains, and advisory AI.',
         capabilities: ['NOVA Intelligence', 'Multi-modal readiness', 'Privacy-first orchestration'],
         privacyNotes: ['NOVA Intelligence can recommend, but operational changes still require confirmation.'],
+      },
+    ],
+  },
+  {
+    id: 6,
+    name: 'Release 6',
+    title: 'Production Readiness',
+    status: 'active',
+    goal: 'Harden NOVA for daily operational use with release gates, monitoring, rollback, privacy controls, and verified fallback behavior.',
+    modules: [
+      {
+        id: 'production-release-gates',
+        name: 'Production Release Gates',
+        release: 6,
+        status: 'active',
+        summary: 'Tracks build, test, e2e, security, fallback, notification, and missed-duty safety gates before launch.',
+        capabilities: ['Release checklist', 'Build gate', 'Test gate', 'E2E gate', 'Security gate', 'Missed-duty safety gate'],
+        privacyNotes: ['Release evidence stores status labels and references, not secrets or raw personal data.'],
+      },
+      {
+        id: 'production-monitoring',
+        name: 'Monitoring and Health',
+        release: 6,
+        status: 'active',
+        summary: 'Surfaces live integration health, source freshness, fallback labels, and operational status for daily use.',
+        capabilities: ['Monitoring', 'Integration health', 'Source freshness', 'Fallback verification'],
+        privacyNotes: ['Health reports must never include tokens, API keys, raw email bodies, or exact private location history.'],
+      },
+      {
+        id: 'recovery-runbooks',
+        name: 'Recovery Runbooks',
+        release: 6,
+        status: 'foundation',
+        summary: 'Documents rollback, integration-failure response, backup/recovery, and database migration rollback procedures.',
+        capabilities: ['Rollback', 'Backup and recovery', 'Runbooks', 'Migration rollback'],
+        privacyNotes: ['Runbooks describe operational procedures without storing provider secrets.'],
+      },
+      {
+        id: 'privacy-launch-controls',
+        name: 'Privacy Launch Controls',
+        release: 6,
+        status: 'active',
+        summary: 'Validates OAuth scopes, encrypted token storage, location deletion, RLS coverage, and data minimization before launch.',
+        capabilities: ['OAuth scope review', 'Token storage review', 'Location-data deletion', 'Supabase RLS review', 'Privacy controls'],
+        privacyNotes: ['Launch is blocked if private memory, location, or token controls are not reviewable and revocable.'],
+      },
+      {
+        id: 'commute-accuracy-loop',
+        name: 'Commute Accuracy Loop',
+        release: 6,
+        status: 'foundation',
+        summary: 'Tracks planned-versus-actual commute outcomes so NOVA can improve warnings without silently changing duties.',
+        capabilities: ['Planned-versus-actual commute accuracy', 'Delayed departure review', 'Missed-train review', 'Manual outcome labels'],
+        privacyNotes: ['Accuracy records are user-owned, deletable, and do not require continuous background GPS.'],
       },
     ],
   },
