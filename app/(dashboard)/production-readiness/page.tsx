@@ -35,7 +35,8 @@ export default async function ProductionReadinessPage() {
   const health = await buildProductionHealthReport();
   const records = release6SeedRecords(health.checkedAt);
   const summary = buildProductionReadinessSummary(records);
-  const launchChecks = release7LaunchChecks(health.checkedAt, false);
+  const productionLive = process.env.VERCEL_ENV === "production";
+  const launchChecks = release7LaunchChecks(health.checkedAt, productionLive);
   const launchSummary = buildRelease7LaunchSummary(launchChecks);
 
   return (
