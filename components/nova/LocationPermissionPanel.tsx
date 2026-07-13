@@ -216,6 +216,24 @@ export function LocationPermissionPanel() {
     await submitLocationEvent(position, "manual");
   }
 
+  async function startCurrentMission() {
+    setMessage("Starting current mission...");
+    const response = await fetch("/api/location/mission", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ direction, source: "manual" })
+    });
+    const payload = await response.json();
+    if (!payload.ok) {
+      setMessage(payload.error ?? "Mission could not be started.");
+      return;
+    }
+
+    await refreshMission();
+    setMessage(locationEnabled ? "Current mission started. Starting live GPS..." : "Current mission started. Enable NOVA location to add live GPS updates.");
+    if (locationEnabled) startLiveTracking();
+  }
+
   function stopLiveTracking(updateState = true) {
     if (watchId.current !== null && "geolocation" in navigator) {
       navigator.geolocation.clearWatch(watchId.current);
@@ -387,6 +405,14 @@ export function LocationPermissionPanel() {
         >
           <ShieldCheck size={16} />
           Classify location
+        </button>
+        <button
+          type="button"
+          onClick={startCurrentMission}
+          className="focus-ring mt-3 ml-2 inline-flex items-center gap-2 rounded-md border border-occ-green/40 bg-occ-green/10 px-3 py-2 text-sm font-semibold text-green-100"
+        >
+          <Navigation size={16} />
+          Start current mission
         </button>
       </div>
 

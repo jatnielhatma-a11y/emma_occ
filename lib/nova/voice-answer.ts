@@ -268,6 +268,20 @@ function deterministicAnswer(transcript: string, app: Awaited<ReturnType<typeof 
     });
   }
 
+  if (command.intent === "start_mission") {
+    return novaVoiceAnswerSchema.parse({
+      ok: true,
+      mode: "command",
+      title: command.label,
+      answer: command.response,
+      route: command.route,
+      confidence: command.confidence,
+      usedWeb: false,
+      generatedBy: "fallback",
+      sources: appSources.slice(0, 5)
+    });
+  }
+
   if (includesAny(normalized, ["duty", "shift", "roster", "ledger"])) {
     const dutyText = app.duties.length
       ? `Your 10-day duty ledger runs ${app.today} through ${app.end}. First rows: ${app.duties.slice(0, 5).map(formatDuty).join("; ")}.`

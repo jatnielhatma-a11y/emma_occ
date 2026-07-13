@@ -90,8 +90,22 @@ test("Release 9 command router maps voice commands to trusted NOVA routes", () =
   const { classifyMissionCommand } = loadTsModule("lib/nova/mission-intelligence.ts");
 
   assert.equal(classifyMissionCommand("NOVA brief me").route, "/dashboard");
+  assert.equal(classifyMissionCommand("start current mission").intent, "start_mission");
+  assert.equal(classifyMissionCommand("start current mission").action, "start_current_mission");
+  assert.equal(classifyMissionCommand("start return mission home").direction, "return");
   assert.equal(classifyMissionCommand("check my commute and NS").route, "/commute");
   assert.equal(classifyMissionCommand("show next duty").route, "/dashboard#emma-occ");
   assert.equal(classifyMissionCommand("open settings").route, "/settings");
   assert.equal(classifyMissionCommand("please erase the moon").intent, "unknown");
+});
+
+test("NOVA AI database migration is private and avoids transcript columns", () => {
+  const migration = readFileSync("supabase/migrations/20260714002634_nova_ai_database_and_mission_start.sql", "utf8");
+
+  assert.match(migration, /create table if not exists public\.nova_ai_runtime_state/i);
+  assert.match(migration, /create table if not exists public\.nova_ai_events/i);
+  assert.match(migration, /alter table public\.nova_ai_runtime_state enable row level security/i);
+  assert.match(migration, /alter table public\.nova_ai_events enable row level security/i);
+  assert.match(migration, /to authenticated/i);
+  assert.doesNotMatch(migration, /\btranscript\b/i);
 });

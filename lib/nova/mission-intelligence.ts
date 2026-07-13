@@ -32,6 +32,7 @@ export const missionRecordSchema = z.object({
 
 export const missionCommandIntentSchema = z.enum([
   "daily_brief",
+  "start_mission",
   "next_duty",
   "commute_status",
   "calendar_review",
@@ -52,6 +53,8 @@ export type MissionCommandResult = {
   label: string;
   response: string;
   route?: string;
+  action?: "start_current_mission";
+  direction?: "outbound" | "return";
   confidence: number;
   requiresConfirmation: boolean;
   safety: "local-route" | "advisory" | "review-required";
@@ -128,6 +131,24 @@ export function classifyMissionCommand(transcript: string): MissionCommandResult
 
   if (has("brief", "mission brief", "daily plan", "start my day")) {
     return routeCommand("daily_brief", "Daily brief", "Opening your Mission Control brief.", "/dashboard", 0.93);
+  }
+
+  if (
+    has("start current mission", "start mission", "begin mission", "start commute", "begin commute", "activate mission") ||
+    ((has("start", "begin", "activate") && has("mission", "commute")))
+  ) {
+    const direction = has("home", "return", "back") ? "return" : "outbound";
+    return {
+      intent: "start_mission",
+      label: "Start current mission",
+      response: direction === "return" ? "Starting your return mission and opening commute control." : "Starting your outbound mission and opening commute control.",
+      route: "/commute",
+      action: "start_current_mission",
+      direction,
+      confidence: 0.95,
+      requiresConfirmation: false,
+      safety: "local-route"
+    };
   }
 
   if (has("next duty", "next shift", "today's duty", "todays duty", "roster", "emma occ")) {

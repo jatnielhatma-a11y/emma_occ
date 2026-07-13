@@ -41,6 +41,7 @@ type SpeechWindow = Window &
 
 const quickCommands = [
   "NOVA brief me",
+  "Start current mission",
   "Check my commute",
   "Show next duty",
   "Open calendar",
@@ -90,8 +91,37 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
       const payload = await response.json();
 
       if (payload.ok) {
-        setAnswer(payload as NovaVoiceAnswer);
-        speak(payload.answer);
+        const nextAnswer = payload as NovaVoiceAnswer;
+        if (nextResult.action === "start_current_mission") {
+          const missionResponse = await fetch("/api/location/mission", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ direction: nextResult.direction ?? "outbound", source: "voice-command" })
+          });
+          const missionPayload = await missionResponse.json();
+          const actionAnswer: NovaVoiceAnswer = {
+            ...nextAnswer,
+            answer: missionPayload.ok
+              ? `${nextAnswer.answer} Mission is active. Open commute control to start or verify live GPS.`
+              : `${nextAnswer.answer} ${missionPayload.error ?? "Mission start could not be completed."}`,
+            confidence: missionPayload.ok ? Math.max(nextAnswer.confidence, 0.92) : 0.45,
+            sources: [
+              {
+                label: "Mission",
+                source: "NOVA commute missions",
+                url: null,
+                freshness: missionPayload.ok ? ("live" as const) : ("unavailable" as const),
+                detail: missionPayload.ok ? `Mission ${missionPayload.mission?.status ?? "active"}` : "Mission start failed"
+              },
+              ...nextAnswer.sources
+            ].slice(0, 10)
+          };
+          setAnswer(actionAnswer);
+          speak(actionAnswer.answer);
+          return;
+        }
+        setAnswer(nextAnswer);
+        speak(nextAnswer.answer);
       } else {
         setAnswer(null);
         setResult({
