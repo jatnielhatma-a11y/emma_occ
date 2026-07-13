@@ -239,7 +239,17 @@ async function fetchJson(url: string, accessToken: string, label: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`${label} returned ${response.status}.`);
+    const raw = await response.text().catch(() => "");
+    let detail = raw.slice(0, 300);
+    try {
+      const payload = JSON.parse(raw);
+      const message = payload?.error?.message;
+      const reason = payload?.error?.errors?.[0]?.reason;
+      detail = [reason, message].filter(Boolean).join(": ") || detail;
+    } catch {
+      // Keep the bounded raw response as diagnostic detail.
+    }
+    throw new Error(`${label} returned ${response.status}${detail ? `: ${detail}` : ""}.`);
   }
 
   return response.json();

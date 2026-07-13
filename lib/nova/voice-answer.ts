@@ -458,7 +458,7 @@ async function generateOpenAiAnswer(
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || "gpt-5.2",
         store: false,
-        tools: useOpenAiWeb ? [{ type: "web_search_preview" }] : undefined,
+        tools: useOpenAiWeb ? [{ type: "web_search" }] : undefined,
         instructions:
           "You are NOVA Mission Voice. Answer the user's spoken request using authenticated NOVA app context first. For public non-personal questions, use provided public web evidence and web search when available. Be concise, operational, and accurate. Do not invent data. Label fallback/unavailable sources. Return JSON only.",
         input: [
