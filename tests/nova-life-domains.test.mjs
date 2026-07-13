@@ -70,3 +70,46 @@ test("privacy notes keep finance and health inside Release 3 boundaries", () => 
   assert.match(domainPrivacyNote("finance"), /No bank connection/i);
   assert.match(domainPrivacyNote("health"), /not medical advice/i);
 });
+
+test("savings and learning capabilities are active without bank automation", () => {
+  const { learningCapabilitySummary, savingsCapabilitySummary } = loadLifeDomains();
+  const records = [
+    {
+      domain: "finance",
+      category: "savings_goal",
+      status: "active",
+      amountCents: 250000,
+      title: "Family buffer",
+      detail: "",
+      priority: 2,
+      targetDate: null,
+      currency: "EUR",
+      tags: [],
+      sensitive: true
+    },
+    {
+      domain: "learning",
+      category: "learning_plan",
+      status: "active",
+      amountCents: null,
+      title: "French refresh",
+      detail: "",
+      priority: 3,
+      targetDate: null,
+      currency: "EUR",
+      tags: [],
+      sensitive: false
+    }
+  ];
+
+  const savings = savingsCapabilitySummary(records);
+  const learning = learningCapabilitySummary(records);
+
+  assert.equal(savings.active, true);
+  assert.equal(savings.activeGoals, 1);
+  assert.equal(savings.totalTargetCents, 250000);
+  assert.equal(savings.privacyMode, "manual-no-bank-connection");
+  assert.equal(learning.active, true);
+  assert.equal(learning.activePlans, 1);
+  assert.equal(learning.recommendationMode, "reviewable");
+});

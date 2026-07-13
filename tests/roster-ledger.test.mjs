@@ -31,13 +31,15 @@ test("duty ledger starts at the current day and keeps chronological order", () =
     [
       { id: "past", duty_date: "2026-07-12", start_time: "23:00", end_time: "07:05" },
       { id: "future", duty_date: "2026-07-14", start_time: "15:00", end_time: "23:05" },
+      { id: "day-ten", duty_date: "2026-07-22", start_time: "08:00", end_time: "16:05" },
+      { id: "day-eleven", duty_date: "2026-07-23", start_time: "08:00", end_time: "16:05" },
       { id: "today-late", duty_date: "2026-07-13", start_time: "15:00", end_time: "23:05" },
       { id: "today-early", duty_date: "2026-07-13", start_time: "08:00", end_time: "16:05" }
     ],
     "2026-07-13"
   );
 
-  assert.equal(JSON.stringify(rows.map((row) => row.id)), JSON.stringify(["today-early", "today-late", "future"]));
+  assert.equal(JSON.stringify(rows.map((row) => row.id)), JSON.stringify(["today-early", "today-late", "future", "day-ten"]));
 });
 
 test("shift code description combines roster code and shift label", () => {

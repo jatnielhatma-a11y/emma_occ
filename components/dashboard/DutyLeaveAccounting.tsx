@@ -176,9 +176,9 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-white">Duty ledger</h2>
-            <p className="text-sm text-zinc-500">Current-day-forward duties, rest days, vacation, and sick-leave markings.</p>
+            <p className="text-sm text-zinc-500">Rolling 10-day roster from today, including rest days, vacation, and sick-leave markings.</p>
           </div>
-          <StatusBadge tone="cyan">{ledgerDuties.length} from today</StatusBadge>
+          <StatusBadge tone="cyan">{ledgerDuties.length} in 10 days</StatusBadge>
         </div>
         <div className="mt-4">
           {ledgerDuties.length ? ledgerDuties.map((duty) => renderDutyRow(duty)) : <p className="py-8 text-sm text-zinc-500">No roster rows loaded from today onward.</p>}

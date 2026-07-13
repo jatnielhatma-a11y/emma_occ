@@ -1,7 +1,7 @@
 import { BookOpen, HeartPulse, Home, Landmark, Plane } from "lucide-react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { LifeDomainsPanel } from "@/components/nova/LifeDomainsPanel";
-import { buildLifeDomainReadiness, emptyLifeDomainCounts, type LifeDomain, type LifeDomainCounts } from "@/lib/nova/life-domains";
+import { buildLifeDomainReadiness, emptyLifeDomainCounts, type LifeDomain, type LifeDomainCounts, type LifeDomainStoredRecord } from "@/lib/nova/life-domains";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const domainCards: Array<{ domain: LifeDomain; label: string; icon: typeof Landmark }> = [
@@ -35,7 +35,30 @@ export default async function LifeDomainsPage() {
     (next, card, index) => ({ ...next, [card.domain]: domainCounts[index] ?? 0 }),
     { ...emptyLifeDomainCounts }
   );
+  const { data: activeCapabilityRecords = [] } = await supabase
+    .from("nova_life_domain_records")
+    .select("id,domain,title,detail,category,status,priority,target_date,amount_cents,currency,tags,sensitive,created_at")
+    .eq("user_id", userId)
+    .in("domain", ["finance", "learning"])
+    .is("archived_at", null)
+    .order("created_at", { ascending: false })
+    .limit(20);
   const readiness = buildLifeDomainReadiness(counts);
+  const capabilityRecords = (activeCapabilityRecords ?? []).map((record: any) => ({
+    id: record.id,
+    domain: record.domain,
+    title: record.title,
+    detail: record.detail ?? "",
+    category: record.category,
+    status: record.status,
+    priority: record.priority,
+    targetDate: record.target_date,
+    amountCents: record.amount_cents,
+    currency: record.currency,
+    tags: record.tags ?? [],
+    sensitive: record.sensitive,
+    createdAt: record.created_at
+  })) as LifeDomainStoredRecord[];
 
   return (
     <div className="space-y-5">
@@ -50,7 +73,7 @@ export default async function LifeDomainsPage() {
             <p className="text-xs uppercase tracking-[0.18em] text-occ-cyan">NOVA life domains</p>
             <h1 className="mt-2 text-3xl font-semibold text-occ-platinum">Finance, Home, Travel, Health, and Learning</h1>
             <p className="mt-3 max-w-3xl text-sm text-zinc-400">
-              Release 3 adds structured personal life domains that can inform later recommendations after explicit review. It does not connect banks, diagnose health, or change Emma OCC operations.
+              Release 3 adds structured personal life domains with active savings goals and learning plans. It does not connect banks, diagnose health, or change Emma OCC operations.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
@@ -64,7 +87,7 @@ export default async function LifeDomainsPage() {
             </div>
             <div className="rounded-md border border-occ-line bg-occ-ink/80 p-3">
               <p className="text-sm text-zinc-400">Boundary</p>
-              <strong className="mt-2 block text-xl text-white">Manual only</strong>
+              <strong className="mt-2 block text-xl text-white">Savings + Learning active</strong>
             </div>
           </div>
         </div>
@@ -85,7 +108,7 @@ export default async function LifeDomainsPage() {
         })}
       </section>
 
-      <LifeDomainsPanel counts={counts} />
+      <LifeDomainsPanel counts={counts} capabilityRecords={capabilityRecords} />
     </div>
   );
 }

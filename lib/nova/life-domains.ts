@@ -32,6 +32,11 @@ export type LifeDomainRecord = z.infer<typeof lifeDomainRecordSchema>;
 
 export type LifeDomainCounts = Record<LifeDomain, number>;
 
+export type LifeDomainStoredRecord = LifeDomainRecord & {
+  id?: string;
+  createdAt?: string | null;
+};
+
 export const emptyLifeDomainCounts: LifeDomainCounts = {
   finance: 0,
   home: 0,
@@ -49,6 +54,34 @@ export function buildLifeDomainReadiness(counts: LifeDomainCounts) {
     totalRecords,
     allDomainsStarted: activeDomainCount === Object.keys(emptyLifeDomainCounts).length,
     recommendationStatus: totalRecords > 0 ? "context-ready" : "waiting-for-context"
+  };
+}
+
+export function savingsCapabilitySummary(records: Array<Pick<LifeDomainRecord, "domain" | "category" | "status" | "amountCents">>) {
+  const savings = records.filter((record) => record.domain === "finance" && record.category === "savings_goal" && record.status !== "archived");
+  const active = savings.filter((record) => record.status === "active" || record.status === "planned");
+  const totalTargetCents = active.reduce((sum, record) => sum + (record.amountCents ?? 0), 0);
+
+  return {
+    active: true,
+    activeGoals: active.length,
+    totalTargetCents,
+    status: active.length > 0 ? "savings-active" : "ready-for-first-goal",
+    privacyMode: "manual-no-bank-connection"
+  };
+}
+
+export function learningCapabilitySummary(records: Array<Pick<LifeDomainRecord, "domain" | "category" | "status">>) {
+  const learning = records.filter((record) => record.domain === "learning" && record.status !== "archived");
+  const activePlans = learning.filter((record) => record.category === "learning_plan" && (record.status === "active" || record.status === "planned"));
+  const completed = learning.filter((record) => record.status === "completed");
+
+  return {
+    active: true,
+    activePlans: activePlans.length,
+    completedRecords: completed.length,
+    status: learning.length > 0 ? "learning-active" : "ready-for-first-plan",
+    recommendationMode: "reviewable"
   };
 }
 
