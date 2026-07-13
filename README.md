@@ -44,6 +44,12 @@ Release 7 turns the launch surface into final production certification. It track
 
 See `docs/nova-release-7-production-launch.md` for the launch checklist, deployment notes, and v1.0 release gate.
 
+## NOVA Release 8 Post-launch Optimization
+
+Release 8 adds `/optimization` for real-world feedback loops, commute accuracy learning, duty-risk forecasting, proactive daily planning, memory recommendation review, mobile/PWA polish, privacy tuning, family-context refinement, and monitoring noise reduction. It keeps recommendations advisory and blocks silent automation.
+
+See `docs/nova-release-8-post-launch-optimization.md` for the optimization guardrails and storage notes.
+
 ## Phase 1 Scope
 
 Built in this phase:

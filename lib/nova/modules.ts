@@ -1,4 +1,4 @@
-export type NovaReleaseId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type NovaReleaseId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type NovaModuleStatus = "active" | "foundation" | "planned";
 
@@ -365,6 +365,51 @@ export const NOVA_RELEASES: NovaRelease[] = [
         summary: "Keeps rollback, backup/recovery, release notes, and integration-failure runbooks visible before and after deployment.",
         capabilities: ["Rollback rehearsal", "Backup and recovery", "Release notes", "Integration failure runbooks", "Production monitoring"],
         privacyNotes: ["Operational runbooks must not contain secrets, tokens, or raw personal records."]
+      }
+    ]
+  },
+  {
+    id: 8,
+    name: "Release 8",
+    title: "Post-launch Optimization",
+    status: "active",
+    goal: "Improve NOVA from real daily use with feedback loops, accuracy learning, mobile polish, privacy tuning, and monitored recommendations without adding silent automation.",
+    modules: [
+      {
+        id: "usage-feedback-loop",
+        name: "Usage Feedback Loop",
+        release: 8,
+        status: "active",
+        summary: "Captures reviewable feedback about useful alerts, missed context, commute accuracy, and daily planning friction.",
+        capabilities: ["Real-world feedback", "Improvement backlog", "Quality signals", "Human review"],
+        privacyNotes: ["Feedback records store labels and summaries; private raw email, calendar, location, and memory content stays out of optimization notes."]
+      },
+      {
+        id: "commute-duty-learning",
+        name: "Commute and Duty Learning",
+        release: 8,
+        status: "active",
+        summary: "Tunes planned-versus-actual commute predictions and duty-risk warnings from verified outcomes.",
+        capabilities: ["Commute prediction accuracy", "Duty-risk forecasting", "Missed-train learning", "Delay pattern review"],
+        privacyNotes: ["Learning uses explicit outcome labels and source freshness instead of continuous background tracking."]
+      },
+      {
+        id: "personalized-daily-assistant",
+        name: "Personalized Daily Assistant",
+        release: 8,
+        status: "foundation",
+        summary: "Refines recommendations, daily planning, memory suggestions, and family context while keeping every action advisory.",
+        capabilities: ["Personalized recommendations", "Proactive daily planning", "Memory recommendation review", "Family context tuning"],
+        privacyNotes: ["Release 8 recommendations remain advisory unless the user explicitly confirms an external action."]
+      },
+      {
+        id: "post-launch-platform-polish",
+        name: "Platform Polish",
+        release: 8,
+        status: "foundation",
+        summary: "Tracks mobile PWA refinements, notification quality, accessibility follow-ups, monitoring noise, and operational runbook improvements.",
+        capabilities: ["Mobile PWA polish", "Notification quality", "Monitoring tuning", "Accessibility follow-ups", "Runbook refinement"],
+        privacyNotes: ["Monitoring improvements must not increase exposed personal data or include secrets in logs."]
       }
     ]
   }

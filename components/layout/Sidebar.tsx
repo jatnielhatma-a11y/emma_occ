@@ -18,6 +18,7 @@ import {
   Rocket,
   Route,
   Settings,
+  Sparkles,
   TrafficCone
 } from "lucide-react";
 import clsx from "clsx";
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/intelligence", labelKey: "nav.intelligence", icon: BrainCircuit },
   { href: "/nova-intelligence", labelKey: "nav.novaIntelligence", icon: Cpu },
   { href: "/production-readiness", labelKey: "nav.productionReadiness", icon: Rocket },
+  { href: "/optimization", labelKey: "nav.optimization", icon: Sparkles },
   { href: "/dashboard#emma-occ", labelKey: "nav.occ", icon: Gauge },
   { href: "/calendar-sync", labelKey: "nav.calendar", icon: CalendarClock },
   { href: "/commute", labelKey: "nav.commute", icon: Route },
