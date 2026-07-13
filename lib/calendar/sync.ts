@@ -8,6 +8,7 @@ import {
   type GoogleCalendarConnection,
   type SyncableDuty
 } from "@/lib/calendar/google";
+import { syncGoogleContentForUser, type GoogleContentSyncSummary } from "@/lib/calendar/google-import";
 import { buildNsPlannerUrl } from "@/lib/ns-commute";
 
 const NS_STATUS_URL = "https://www.ns.nl/reisinformatie/actuele-situatie-op-het-spoor";
@@ -20,6 +21,7 @@ type SyncResult = {
   ok: boolean;
   importId?: string;
   plan?: ReturnType<typeof buildCalendarSyncPlan>;
+  googleContent?: GoogleContentSyncSummary;
   results?: Array<{ ok: boolean; idempotencyKey: string; eventId?: string }>;
   error?: string;
   skipped?: boolean;
@@ -68,10 +70,6 @@ export async function syncGoogleCalendarForUser({
   importId?: string | null;
 }): Promise<SyncResult> {
   const activeImportId = importId ?? (await latestImportId(supabase, userId));
-  if (!activeImportId) {
-    return { ok: false, error: "No imported roster found.", skipped: true };
-  }
-
   const { data: connection } = await supabase
     .from("google_calendar_connections")
     .select("*")
@@ -82,6 +80,41 @@ export async function syncGoogleCalendarForUser({
   const storedAccessToken = connection ? getGoogleAccessToken(connection as GoogleCalendarConnection) : null;
   if (!storedAccessToken) {
     return { ok: false, error: "Connect Google Calendar first.", skipped: true };
+  }
+
+  let activeToken = storedAccessToken;
+  const expiresAt = connection.expires_at ? new Date(connection.expires_at).getTime() : 0;
+  if (expiresAt && expiresAt < Date.now() + 5 * 60_000) {
+    const refreshed = await refreshGoogleAccessToken(connection as GoogleCalendarConnection);
+    if (refreshed?.access_token) {
+      activeToken = refreshed.access_token;
+      const existingRefreshToken = getGoogleRefreshToken(connection as GoogleCalendarConnection);
+      await supabase
+        .from("google_calendar_connections")
+        .update({
+          ...serializeGoogleTokenUpdate(refreshed, existingRefreshToken),
+          expires_at: refreshed.expires_in ? new Date(Date.now() + refreshed.expires_in * 1000).toISOString() : null
+        })
+        .eq("id", connection.id);
+    }
+  }
+
+  const googleContent = await syncGoogleContentForUser({
+    supabase,
+    userId,
+    accessToken: activeToken,
+    grantedScopes: connection.granted_scopes || connection.scope
+  });
+
+  if (!activeImportId) {
+    await supabase
+      .from("google_calendar_connections")
+      .update({
+        last_sync_at: new Date().toISOString(),
+        last_error: googleContent.errors.length ? googleContent.errors.join(" ") : null
+      })
+      .eq("id", connection.id);
+    return { ok: true, googleContent, skipped: true };
   }
 
   const { data: duties = [] } = await supabase
@@ -110,23 +143,6 @@ export async function syncGoogleCalendarForUser({
       toHomeUrl: commute?.travel_mode === "ns" ? buildNsPlannerUrl(commute?.work_station, commute?.home_station) : null
     }
   );
-
-  let activeToken = storedAccessToken;
-  const expiresAt = connection.expires_at ? new Date(connection.expires_at).getTime() : 0;
-  if (expiresAt && expiresAt < Date.now() + 5 * 60_000) {
-    const refreshed = await refreshGoogleAccessToken(connection as GoogleCalendarConnection);
-    if (refreshed?.access_token) {
-      activeToken = refreshed.access_token;
-      const existingRefreshToken = getGoogleRefreshToken(connection as GoogleCalendarConnection);
-      await supabase
-        .from("google_calendar_connections")
-        .update({
-          ...serializeGoogleTokenUpdate(refreshed, existingRefreshToken),
-          expires_at: refreshed.expires_in ? new Date(Date.now() + refreshed.expires_in * 1000).toISOString() : null
-        })
-        .eq("id", connection.id);
-    }
-  }
 
   const results = [];
   for (const item of plan.items) {
@@ -178,8 +194,14 @@ export async function syncGoogleCalendarForUser({
   const successfulWrites = results.filter((result) => result.ok).length;
   const nextImportStatus = successfulWrites === plan.items.length ? "synced" : "failed";
 
-  await supabase.from("google_calendar_connections").update({ last_sync_at: new Date().toISOString() }).eq("id", connection.id);
+  await supabase
+    .from("google_calendar_connections")
+    .update({
+      last_sync_at: new Date().toISOString(),
+      last_error: googleContent.errors.length ? googleContent.errors.join(" ") : null
+    })
+    .eq("id", connection.id);
   await supabase.from("imports").update({ status: nextImportStatus }).eq("id", activeImportId).eq("user_id", userId);
 
-  return { ok: true, importId: activeImportId, plan, results };
+  return { ok: true, importId: activeImportId, plan, googleContent, results };
 }

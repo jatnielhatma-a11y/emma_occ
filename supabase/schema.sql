@@ -187,12 +187,70 @@ create table if not exists public.ai_queries (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.nova_calendar_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  source_provider text not null default 'google_calendar',
+  source_calendar_id text not null,
+  source_calendar_summary text,
+  source_event_id text not null,
+  external_etag text,
+  event_type text not null default 'default',
+  item_kind text not null default 'appointment' check (item_kind in ('appointment', 'special_date', 'blocked_time', 'focus_time', 'working_location')),
+  title text not null,
+  description text,
+  location text,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  all_day_date date,
+  all_day_end_date date,
+  is_all_day boolean not null default false,
+  status text not null default 'confirmed',
+  html_link text,
+  is_recurring boolean not null default false,
+  recurring_event_id text,
+  birthday_type text,
+  special_date_label text,
+  attendees jsonb not null default '[]'::jsonb,
+  metadata jsonb not null default '{}'::jsonb,
+  synced_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, source_provider, source_calendar_id, source_event_id)
+);
+
+create table if not exists public.nova_tasks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  source_provider text not null default 'manual',
+  source_list_id text not null default 'nova',
+  source_task_id text not null,
+  source_kind text not null default 'task' check (source_kind in ('task', 'special_date', 'appointment_followup', 'manual')),
+  title text not null,
+  notes text,
+  status text not null default 'needsAction',
+  due_at timestamptz,
+  due_date date,
+  completed_at timestamptz,
+  calendar_item_source_id text,
+  source_url text,
+  metadata jsonb not null default '{}'::jsonb,
+  synced_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, source_provider, source_list_id, source_task_id)
+);
+
 create index if not exists duties_user_date_idx on public.duties(user_id, duty_date);
 create index if not exists duties_import_idx on public.duties(import_id);
 create index if not exists imports_user_imported_idx on public.imports(user_id, imported_at desc);
 create index if not exists conflict_logs_user_idx on public.conflict_logs(user_id, created_at desc);
 create index if not exists calendar_sync_logs_user_idx on public.calendar_sync_logs(user_id, created_at desc);
 create index if not exists calendar_sync_logs_key_idx on public.calendar_sync_logs(user_id, idempotency_key);
+create index if not exists nova_calendar_items_user_time_idx on public.nova_calendar_items(user_id, starts_at, all_day_date);
+create index if not exists nova_calendar_items_user_kind_idx on public.nova_calendar_items(user_id, item_kind, status);
+create index if not exists nova_tasks_user_due_idx on public.nova_tasks(user_id, due_date, due_at);
+create index if not exists nova_tasks_user_status_idx on public.nova_tasks(user_id, status);
 
 alter table public.profiles enable row level security;
 alter table public.user_settings enable row level security;
@@ -204,6 +262,8 @@ alter table public.duties enable row level security;
 alter table public.calendar_sync_logs enable row level security;
 alter table public.conflict_logs enable row level security;
 alter table public.ai_queries enable row level security;
+alter table public.nova_calendar_items enable row level security;
+alter table public.nova_tasks enable row level security;
 
 drop policy if exists "Profiles are self-owned" on public.profiles;
 create policy "Profiles are self-owned" on public.profiles
@@ -243,6 +303,14 @@ create policy "Conflicts are self-owned" on public.conflict_logs
 
 drop policy if exists "AI queries are self-owned" on public.ai_queries;
 create policy "AI queries are self-owned" on public.ai_queries
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "NOVA calendar items are self-owned" on public.nova_calendar_items;
+create policy "NOVA calendar items are self-owned" on public.nova_calendar_items
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "NOVA tasks are self-owned" on public.nova_tasks;
+create policy "NOVA tasks are self-owned" on public.nova_tasks
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create or replace function public.touch_updated_at()
@@ -375,7 +443,7 @@ alter table public.google_calendar_connections
   add column if not exists refresh_token_encrypted text,
   add column if not exists token_encryption_version text,
   add column if not exists granted_scopes text not null default '',
-  add column if not exists connected_services jsonb not null default '{"calendar": false, "gmail": false}'::jsonb,
+  add column if not exists connected_services jsonb not null default '{"calendar": false, "calendarList": false, "gmail": false, "tasks": false}'::jsonb,
   add column if not exists oauth_state_hash text,
   add column if not exists last_status_check_at timestamptz,
   add column if not exists disconnected_at timestamptz,

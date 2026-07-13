@@ -319,7 +319,7 @@ function deterministicAnswer(transcript: string, app: Awaited<ReturnType<typeof 
       ok: true,
       mode: "answer",
       title: "Calendar",
-      answer: `${app.operational.calendar.lastSyncLabel}. Source: ${app.operational.calendar.sourceLabel}.`,
+      answer: `${app.operational.calendar.lastSyncLabel}. Source: ${app.operational.calendar.sourceLabel}. NOVA has ${app.operational.calendar.upcomingAppointments} upcoming appointment(s), ${app.operational.calendar.openTasks} open task(s), and ${app.operational.calendar.upcomingSpecialDates} special date(s) from Google data.`,
       route: "/calendar-sync",
       confidence: app.operational.calendar.connected ? 0.82 : 0.42,
       usedWeb: false,

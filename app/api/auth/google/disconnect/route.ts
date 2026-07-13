@@ -35,7 +35,7 @@ export async function POST() {
         refresh_token: null,
         access_token_encrypted: null,
         refresh_token_encrypted: null,
-        connected_services: { calendar: false, gmail: false },
+        connected_services: { calendar: false, calendarList: false, gmail: false, tasks: false },
         disconnected_at: new Date().toISOString()
       })
       .eq("id", connection.id)
@@ -43,7 +43,7 @@ export async function POST() {
   }
 
   await Promise.all(
-    ["calendar", "gmail", "oauth"].map((service) =>
+    ["calendar", "calendarList", "gmail", "tasks", "oauth"].map((service) =>
       supabase.from("integration_metadata").upsert(
         {
           user_id: user.id,

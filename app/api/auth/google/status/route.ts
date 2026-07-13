@@ -23,7 +23,7 @@ export async function GET() {
     .maybeSingle();
 
   const scopes = connection?.granted_scopes || connection?.scope || "";
-  const services = connection?.connected_services ?? googleServicesFromScope(scopes);
+  const services = scopes ? googleServicesFromScope(scopes) : connection?.connected_services ?? googleServicesFromScope(scopes);
 
   return NextResponse.json({
     ok: true,

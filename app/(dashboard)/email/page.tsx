@@ -19,7 +19,7 @@ export default async function EmailPage() {
     .maybeSingle();
 
   const grantedScopes = connection?.granted_scopes || connection?.scope || "";
-  const services = connection?.connected_services ?? googleServicesFromScope(grantedScopes);
+  const services = grantedScopes ? googleServicesFromScope(grantedScopes) : connection?.connected_services ?? googleServicesFromScope(grantedScopes);
 
   return (
     <div className="space-y-5">

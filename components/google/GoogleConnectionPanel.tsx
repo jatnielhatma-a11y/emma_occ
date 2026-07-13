@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, MailCheck, PlugZap, Unplug } from "lucide-react";
+import { CalendarCheck, CheckSquare, MailCheck, PlugZap, Unplug } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -10,7 +10,9 @@ type GoogleConnectionPanelProps = {
   connected: boolean;
   services: {
     calendar?: boolean;
+    calendarList?: boolean;
     gmail?: boolean;
+    tasks?: boolean;
   };
   connectedAt?: string | null;
   lastSyncAt?: string | null;
@@ -55,13 +57,21 @@ export function GoogleConnectionPanel({ configured, connected, services, connect
         </StatusBadge>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-5 grid gap-3 sm:grid-cols-4">
         <div className="rounded-md bg-occ-ink p-3">
           <div className="flex items-center gap-2 text-sm text-zinc-400">
             <CalendarCheck size={16} className="text-occ-cyan" />
             Calendar
           </div>
-          <strong className="mt-2 block text-white">{services.calendar ? "Connected" : "Not connected"}</strong>
+          <strong className="mt-2 block text-white">{services.calendar ? "Events connected" : "Not connected"}</strong>
+          <p className="mt-1 text-xs text-zinc-500">{services.calendarList ? "All calendars visible" : "Primary/fallback only"}</p>
+        </div>
+        <div className="rounded-md bg-occ-ink p-3">
+          <div className="flex items-center gap-2 text-sm text-zinc-400">
+            <CheckSquare size={16} className="text-occ-cyan" />
+            Tasks
+          </div>
+          <strong className="mt-2 block text-white">{services.tasks ? "Read-only connected" : "Reconnect needed"}</strong>
         </div>
         <div className="rounded-md bg-occ-ink p-3">
           <div className="flex items-center gap-2 text-sm text-zinc-400">

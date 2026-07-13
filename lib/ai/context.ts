@@ -107,6 +107,9 @@ export async function buildNovaOperationalContext(supabase: SupabaseLike, userId
     { data: latestImport },
     { data: calendarConnection },
     { data: latestCalendarLog },
+    { count: upcomingAppointments = 0 },
+    { count: openTasks = 0 },
+    { count: upcomingSpecialDates = 0 },
     weather
   ] = await Promise.all([
     supabase.from("user_settings").select("preferred_language").eq("user_id", userId).maybeSingle(),
@@ -151,6 +154,25 @@ export async function buildNovaOperationalContext(supabase: SupabaseLike, userId
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("nova_calendar_items")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .neq("item_kind", "special_date")
+      .neq("status", "cancelled")
+      .or(`starts_at.gte.${new Date().toISOString()},all_day_date.gte.${today}`),
+    supabase
+      .from("nova_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .neq("status", "completed"),
+    supabase
+      .from("nova_calendar_items")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("item_kind", "special_date")
+      .neq("status", "cancelled")
+      .gte("all_day_date", today),
     fetchLiveWeather()
   ]);
 
@@ -210,7 +232,10 @@ export async function buildNovaOperationalContext(supabase: SupabaseLike, userId
     calendar: {
       connected: calendarConnected,
       lastSyncLabel: calendarConnected ? `Last sync ${formatDateTime(calendarConnection?.last_sync_at)}` : "Calendar not connected",
-      sourceLabel: calendarSource
+      sourceLabel: calendarSource,
+      upcomingAppointments: upcomingAppointments ?? 0,
+      openTasks: openTasks ?? 0,
+      upcomingSpecialDates: upcomingSpecialDates ?? 0
     },
     email: {
       connected: gmailConnected,

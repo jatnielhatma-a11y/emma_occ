@@ -2,11 +2,17 @@ import { createHash, randomBytes } from "crypto";
 import { resilientFetch } from "../operations/resilience";
 
 export const GOOGLE_CALENDAR_EVENTS_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+export const GOOGLE_CALENDAR_EVENTS_READONLY_SCOPE = "https://www.googleapis.com/auth/calendar.events.readonly";
+export const GOOGLE_CALENDAR_LIST_READONLY_SCOPE = "https://www.googleapis.com/auth/calendar.calendarlist.readonly";
 export const GOOGLE_GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
+export const GOOGLE_TASKS_READONLY_SCOPE = "https://www.googleapis.com/auth/tasks.readonly";
 export const GOOGLE_PROFILE_SCOPE = "openid email profile";
 
 export const GOOGLE_AUTH_SCOPES = [
   GOOGLE_CALENDAR_EVENTS_SCOPE,
+  GOOGLE_CALENDAR_EVENTS_READONLY_SCOPE,
+  GOOGLE_CALENDAR_LIST_READONLY_SCOPE,
+  GOOGLE_TASKS_READONLY_SCOPE,
   GOOGLE_GMAIL_READONLY_SCOPE,
   "openid",
   "email",
@@ -167,7 +173,9 @@ export function parseGrantedScopes(scope = "") {
 export function googleServicesFromScope(scope = "") {
   const scopes = parseGrantedScopes(scope);
   return {
-    calendar: scopes.has(GOOGLE_CALENDAR_EVENTS_SCOPE),
-    gmail: scopes.has(GOOGLE_GMAIL_READONLY_SCOPE)
+    calendar: scopes.has(GOOGLE_CALENDAR_EVENTS_SCOPE) || scopes.has(GOOGLE_CALENDAR_EVENTS_READONLY_SCOPE),
+    calendarList: scopes.has(GOOGLE_CALENDAR_LIST_READONLY_SCOPE),
+    gmail: scopes.has(GOOGLE_GMAIL_READONLY_SCOPE),
+    tasks: scopes.has(GOOGLE_TASKS_READONLY_SCOPE)
   };
 }

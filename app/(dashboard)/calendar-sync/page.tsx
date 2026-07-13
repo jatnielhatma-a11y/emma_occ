@@ -129,6 +129,21 @@ export default async function CalendarSyncPage({ searchParams }: CalendarSyncPag
     .eq("user_id", user?.id)
     .maybeSingle();
 
+  const [{ count: syncedCalendarCount = 0 }, { count: syncedTaskCount = 0 }, { count: syncedSpecialDateCount = 0 }, { data: syncedItems = [] }] =
+    await Promise.all([
+      supabase.from("nova_calendar_items").select("id", { count: "exact", head: true }).eq("user_id", user?.id),
+      supabase.from("nova_tasks").select("id", { count: "exact", head: true }).eq("user_id", user?.id),
+      supabase.from("nova_calendar_items").select("id", { count: "exact", head: true }).eq("user_id", user?.id).eq("item_kind", "special_date"),
+      supabase
+        .from("nova_calendar_items")
+        .select("id,title,item_kind,starts_at,all_day_date,source_calendar_summary,status")
+        .eq("user_id", user?.id)
+        .neq("status", "cancelled")
+        .order("starts_at", { ascending: true, nullsFirst: false })
+        .order("all_day_date", { ascending: true, nullsFirst: false })
+        .limit(8)
+    ]);
+
   const plan = latestImport
     ? buildCalendarSyncPlan(
         latestImport.id,
@@ -146,7 +161,7 @@ export default async function CalendarSyncPage({ searchParams }: CalendarSyncPag
     : null;
   const googleStatus = googleStatusMessage(resolvedSearchParams?.google);
   const grantedScopes = connection?.granted_scopes || connection?.scope || "";
-  const googleServices = connection?.connected_services ?? googleServicesFromScope(grantedScopes);
+  const googleServices = grantedScopes ? googleServicesFromScope(grantedScopes) : connection?.connected_services ?? googleServicesFromScope(grantedScopes);
   const googleConnected = Boolean(connection && !connection.disconnected_at);
 
   return (
@@ -212,6 +227,18 @@ export default async function CalendarSyncPage({ searchParams }: CalendarSyncPag
             <strong className="mt-1 block text-white">{plan?.items.length ?? 0}</strong>
           </span>
           <span className="rounded-md bg-occ-ink p-3 text-zinc-400">
+            Google appointments
+            <strong className="mt-1 block text-white">{syncedCalendarCount ?? 0}</strong>
+          </span>
+          <span className="rounded-md bg-occ-ink p-3 text-zinc-400">
+            NOVA tasks
+            <strong className="mt-1 block text-white">{syncedTaskCount ?? 0}</strong>
+          </span>
+          <span className="rounded-md bg-occ-ink p-3 text-zinc-400">
+            Special dates
+            <strong className="mt-1 block text-white">{syncedSpecialDateCount ?? 0}</strong>
+          </span>
+          <span className="rounded-md bg-occ-ink p-3 text-zinc-400">
             Commute source
             <strong className="mt-1 block text-white">{commute?.travel_mode === "ns" ? "NS live reference" : "Manual buffer"}</strong>
           </span>
@@ -221,6 +248,35 @@ export default async function CalendarSyncPage({ searchParams }: CalendarSyncPag
               {commute?.home_station && commute?.work_station ? `${commute.home_station} ⇄ ${commute.work_station}` : "Not configured"}
             </strong>
           </span>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Imported Google Calendar data</h2>
+            <p className="text-sm text-zinc-500">
+              Appointments, birthdays, special dates, and task reminders are stored in NOVA after each Google sync.
+            </p>
+          </div>
+          <StatusBadge tone={syncedCalendarCount ? "green" : "neutral"}>{syncedCalendarCount ?? 0} synced</StatusBadge>
+        </div>
+
+        <div className="mt-5 divide-y divide-occ-line">
+          {(syncedItems ?? []).length ? (
+            (syncedItems ?? []).map((item: any) => (
+              <div key={item.id} className="grid gap-2 py-3 sm:grid-cols-[1fr_150px_120px] sm:items-center">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-white">{item.title}</p>
+                  <p className="truncate text-xs text-zinc-500">{item.source_calendar_summary ?? "Google Calendar"}</p>
+                </div>
+                <span className="text-xs text-zinc-400">{item.all_day_date ?? item.starts_at?.slice(0, 16).replace("T", " ") ?? "No time"}</span>
+                <StatusBadge tone={item.item_kind === "special_date" ? "cyan" : "green"}>{item.item_kind}</StatusBadge>
+              </div>
+            ))
+          ) : (
+            <p className="py-8 text-sm text-zinc-500">Run Google sync to load live appointments, birthdays, special dates, and tasks.</p>
+          )}
         </div>
       </section>
 

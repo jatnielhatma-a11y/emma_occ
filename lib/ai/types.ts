@@ -65,6 +65,9 @@ export type NovaOperationalContext = {
     connected: boolean;
     lastSyncLabel: string;
     sourceLabel: string;
+    upcomingAppointments: number;
+    openTasks: number;
+    upcomingSpecialDates: number;
   };
   email: {
     connected: boolean;

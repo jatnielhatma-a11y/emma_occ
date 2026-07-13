@@ -33,7 +33,7 @@ function loadTsModule(path) {
   return module.exports;
 }
 
-test("builds a Google OAuth URL with PKCE and Calendar plus Gmail scopes", () => {
+test("builds a Google OAuth URL with PKCE and Calendar, Tasks, plus Gmail scopes", () => {
   const previous = {
     clientId: process.env.GOOGLE_CLIENT_ID,
     redirectUri: process.env.GOOGLE_REDIRECT_URI
@@ -41,7 +41,14 @@ test("builds a Google OAuth URL with PKCE and Calendar plus Gmail scopes", () =>
   process.env.GOOGLE_CLIENT_ID = "client-id";
   process.env.GOOGLE_REDIRECT_URI = "https://example.com/api/auth/google/callback";
 
-  const { buildGoogleOAuthUrl, codeChallengeForVerifier, GOOGLE_GMAIL_READONLY_SCOPE, GOOGLE_CALENDAR_EVENTS_SCOPE } = loadTsModule("lib/google/oauth.ts");
+  const {
+    buildGoogleOAuthUrl,
+    codeChallengeForVerifier,
+    GOOGLE_GMAIL_READONLY_SCOPE,
+    GOOGLE_CALENDAR_EVENTS_SCOPE,
+    GOOGLE_CALENDAR_LIST_READONLY_SCOPE,
+    GOOGLE_TASKS_READONLY_SCOPE
+  } = loadTsModule("lib/google/oauth.ts");
   const verifier = "a".repeat(64);
   const url = new URL(
     buildGoogleOAuthUrl({
@@ -54,6 +61,8 @@ test("builds a Google OAuth URL with PKCE and Calendar plus Gmail scopes", () =>
   assert.equal(url.searchParams.get("state"), "state-1");
   assert.match(url.searchParams.get("scope") ?? "", new RegExp(GOOGLE_GMAIL_READONLY_SCOPE));
   assert.match(url.searchParams.get("scope") ?? "", new RegExp(GOOGLE_CALENDAR_EVENTS_SCOPE));
+  assert.match(url.searchParams.get("scope") ?? "", new RegExp(GOOGLE_CALENDAR_LIST_READONLY_SCOPE));
+  assert.match(url.searchParams.get("scope") ?? "", new RegExp(GOOGLE_TASKS_READONLY_SCOPE));
 
   if (previous.clientId === undefined) delete process.env.GOOGLE_CLIENT_ID;
   else process.env.GOOGLE_CLIENT_ID = previous.clientId;
@@ -78,13 +87,24 @@ test("encrypts and decrypts Google tokens", () => {
 });
 
 test("detects Google services from granted scopes", () => {
-  const { googleServicesFromScope, GOOGLE_GMAIL_READONLY_SCOPE, GOOGLE_CALENDAR_EVENTS_SCOPE } = loadTsModule("lib/google/oauth.ts");
+  const {
+    googleServicesFromScope,
+    GOOGLE_GMAIL_READONLY_SCOPE,
+    GOOGLE_CALENDAR_EVENTS_SCOPE,
+    GOOGLE_CALENDAR_LIST_READONLY_SCOPE,
+    GOOGLE_TASKS_READONLY_SCOPE
+  } = loadTsModule("lib/google/oauth.ts");
 
-  const allServices = googleServicesFromScope(`${GOOGLE_GMAIL_READONLY_SCOPE} ${GOOGLE_CALENDAR_EVENTS_SCOPE}`);
+  const allServices = googleServicesFromScope(
+    `${GOOGLE_GMAIL_READONLY_SCOPE} ${GOOGLE_CALENDAR_EVENTS_SCOPE} ${GOOGLE_CALENDAR_LIST_READONLY_SCOPE} ${GOOGLE_TASKS_READONLY_SCOPE}`
+  );
   assert.equal(allServices.calendar, true);
+  assert.equal(allServices.calendarList, true);
   assert.equal(allServices.gmail, true);
+  assert.equal(allServices.tasks, true);
 
   const gmailOnly = googleServicesFromScope(GOOGLE_GMAIL_READONLY_SCOPE);
   assert.equal(gmailOnly.calendar, false);
+  assert.equal(gmailOnly.tasks, false);
   assert.equal(gmailOnly.gmail, true);
 });

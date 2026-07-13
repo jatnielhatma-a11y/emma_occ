@@ -23,7 +23,11 @@ export function CalendarSyncClient({ connected, planCount, latestImportId }: Cal
     });
     const payload = await response.json();
     setIsSyncing(false);
-    setStatus(payload.ok ? `Synced ${payload.results?.filter((item: any) => item.ok).length ?? 0} calendar item(s).` : payload.error);
+    setStatus(
+      payload.ok
+        ? `Synced ${payload.results?.filter((item: any) => item.ok).length ?? 0} roster item(s), ${payload.googleContent?.calendarItemsSynced ?? 0} Google calendar item(s), and ${payload.googleContent?.tasksSynced ?? 0} NOVA task(s).`
+        : payload.error
+    );
   }
 
   return (
@@ -38,11 +42,11 @@ export function CalendarSyncClient({ connected, planCount, latestImportId }: Cal
       <button
         type="button"
         onClick={syncCalendar}
-        disabled={!connected || !latestImportId || isSyncing}
+        disabled={!connected || isSyncing}
         className="focus-ring inline-flex items-center gap-2 rounded-md border border-occ-line bg-occ-panel2 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         <RefreshCw size={18} />
-        {isSyncing ? "Syncing..." : `Sync ${planCount} item(s)`}
+        {isSyncing ? "Syncing..." : `Sync ${planCount} roster item(s) + Google data`}
       </button>
       {status ? <span className="text-sm text-zinc-400">{status}</span> : null}
     </div>
