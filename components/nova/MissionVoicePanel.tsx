@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { type FormEvent, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Command, Mic, MicOff, Navigation, ShieldCheck, Volume2 } from "lucide-react";
+import { Command, ExternalLink, Loader2, Mic, MicOff, Navigation, Search, ShieldCheck, Volume2 } from "lucide-react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { classifyMissionCommand, type MissionCommandResult } from "@/lib/nova/mission-intelligence";
+import type { NovaVoiceAnswer } from "@/lib/nova/voice-answer";
 
 type SpeechRecognitionResultLike = {
   readonly 0: {
@@ -44,31 +45,77 @@ const quickCommands = [
   "Show next duty",
   "Open calendar",
   "Show alerts",
-  "Privacy review"
+  "Privacy review",
+  "What is NOVA learning?"
 ];
 
 export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const [listening, setListening] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [speechAvailable, setSpeechAvailable] = useState(true);
   const [spokenReplies, setSpokenReplies] = useState(false);
+  const [allowWeb, setAllowWeb] = useState(true);
   const [transcript, setTranscript] = useState("");
+  const [typedPrompt, setTypedPrompt] = useState("");
   const [result, setResult] = useState<MissionCommandResult>(() => classifyMissionCommand("help"));
+  const [answer, setAnswer] = useState<NovaVoiceAnswer | null>(null);
 
-  const confidence = useMemo(() => `${Math.round(result.confidence * 100)}%`, [result.confidence]);
+  const confidence = useMemo(() => `${Math.round((answer?.confidence ?? result.confidence) * 100)}%`, [answer?.confidence, result.confidence]);
 
-  function runCommand(command: string) {
-    const nextResult = classifyMissionCommand(command);
-    setTranscript(command);
-    setResult(nextResult);
-
+  function speak(text: string) {
     if (spokenReplies && typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(nextResult.response);
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.pitch = 0.96;
       window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  async function runCommand(command: string) {
+    const nextResult = classifyMissionCommand(command);
+    setTranscript(command);
+    setResult(nextResult);
+    setAnswer(null);
+    setIsThinking(true);
+
+    try {
+      const response = await fetch("/api/nova/voice-command", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: command, allowWeb })
+      });
+      const payload = await response.json();
+
+      if (payload.ok) {
+        setAnswer(payload as NovaVoiceAnswer);
+        speak(payload.answer);
+      } else {
+        setAnswer(null);
+        setResult({
+          intent: "unknown",
+          label: "NOVA unavailable",
+          response: payload.error || "NOVA could not answer that yet.",
+          confidence: 0.2,
+          requiresConfirmation: true,
+          safety: "review-required"
+        });
+        speak(payload.error || "NOVA could not answer that yet.");
+      }
+    } catch {
+      setAnswer(null);
+      setResult({
+        intent: "unknown",
+        label: "NOVA interrupted",
+        response: "NOVA could not reach the answer service. Try again in a moment.",
+        confidence: 0.2,
+        requiresConfirmation: true,
+        safety: "review-required"
+      });
+    } finally {
+      setIsThinking(false);
     }
   }
 
@@ -97,7 +144,7 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
     recognition.lang = "en-US";
     recognition.onresult = (event) => {
       const finalResult = event.results[event.results.length - 1]?.[0]?.transcript ?? "";
-      runCommand(finalResult);
+      void runCommand(finalResult);
     };
     recognition.onerror = () => {
       setListening(false);
@@ -121,8 +168,21 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
   }
 
   function openTarget() {
-    if (result.route) router.push(result.route);
+    const route = answer?.route ?? result.route;
+    if (route) router.push(route);
   }
+
+  function submitTypedPrompt(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const prompt = typedPrompt.trim();
+    if (!prompt) return;
+    void runCommand(prompt);
+  }
+
+  const displayTitle = answer?.title ?? result.label;
+  const displayResponse = answer?.answer ?? result.response;
+  const displayRoute = answer?.route ?? result.route;
+  const displaySafety = answer?.usedWeb ? "advisory" : result.safety;
 
   return (
     <section className="nova-surface rounded-lg border border-occ-line p-5 shadow-nova">
@@ -131,6 +191,7 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge tone="green">Release 9 active</StatusBadge>
             <StatusBadge tone="cyan">Push-to-talk</StatusBadge>
+            <StatusBadge tone={allowWeb ? "green" : "neutral"}>{allowWeb ? "Web lookup on" : "App only"}</StatusBadge>
             <StatusBadge tone="neutral">No transcript storage</StatusBadge>
           </div>
           <p className="mt-4 text-xs uppercase tracking-[0.18em] text-occ-cyan">NOVA Mission Voice</p>
@@ -138,7 +199,7 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
             NOVA voice command layer
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-            Speak one command at a time to open your brief, duty status, commute, calendar, alerts, settings, privacy controls, or optimization loops. NOVA listens only after you press the microphone.
+            Speak or type a command or question. NOVA checks the app first, can use public web lookup for general questions, and labels the sources it used. NOVA listens only after you press the microphone.
           </p>
         </div>
         <span className="grid h-12 w-12 place-items-center rounded-md border border-occ-cyan/30 bg-occ-cyan/10 text-occ-cyan">
@@ -151,10 +212,11 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
           <button
             type="button"
             onClick={listening ? stopListening : startListening}
-            className="focus-ring flex min-h-14 w-full items-center justify-center gap-3 rounded-md bg-occ-cyan px-4 text-sm font-semibold text-occ-ink transition hover:bg-cyan-200"
+            disabled={isThinking}
+            className="focus-ring flex min-h-14 w-full items-center justify-center gap-3 rounded-md bg-occ-cyan px-4 text-sm font-semibold text-occ-ink transition hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-70"
           >
-            {listening ? <MicOff size={19} /> : <Mic size={19} />}
-            {listening ? "Listening..." : "Start voice command"}
+            {isThinking ? <Loader2 size={19} className="animate-spin" /> : listening ? <MicOff size={19} /> : <Mic size={19} />}
+            {isThinking ? "NOVA is checking..." : listening ? "Listening..." : "Ask NOVA"}
           </button>
 
           <button
@@ -166,13 +228,46 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
             {spokenReplies ? "Spoken replies on" : "Spoken replies off"}
           </button>
 
+          <label className="mt-3 flex items-center justify-between gap-4 rounded-md border border-occ-line bg-occ-panel2 px-3 py-3 text-sm text-zinc-300">
+            <span className="flex items-center gap-2">
+              <Search size={16} className="text-occ-cyan" />
+              Allow public web lookup
+            </span>
+            <input
+              type="checkbox"
+              checked={allowWeb}
+              onChange={(event) => setAllowWeb(event.target.checked)}
+              className="h-5 w-5 accent-occ-cyan"
+            />
+          </label>
+
+          <form onSubmit={submitTypedPrompt} className="mt-3">
+            <label className="block text-sm text-zinc-300">
+              Type to NOVA
+              <textarea
+                value={typedPrompt}
+                onChange={(event) => setTypedPrompt(event.target.value)}
+                rows={3}
+                placeholder="Ask: What is my next duty? Or: look up airport disruption news"
+                className="focus-ring mt-2 w-full rounded-md border border-occ-line bg-occ-panel px-3 py-2 text-sm text-white placeholder:text-zinc-600"
+              />
+            </label>
+            <button
+              className="focus-ring mt-3 inline-flex min-h-10 items-center gap-2 rounded-md border border-occ-cyan/40 bg-occ-cyan/10 px-3 text-sm text-cyan-100 transition hover:border-occ-cyan hover:text-white disabled:cursor-wait disabled:opacity-70"
+              disabled={isThinking}
+            >
+              {isThinking ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+              Ask
+            </button>
+          </form>
+
           <div className="mt-4 rounded-md border border-occ-line bg-occ-panel p-3 text-sm">
             <div className="flex items-center gap-2 text-zinc-300">
               <ShieldCheck size={16} className="text-occ-green" />
               <span>Privacy mode</span>
             </div>
             <p className="mt-2 text-zinc-500">
-              Commands stay in this browser session. External actions are routed for review instead of being executed silently.
+              Commands are answered for the current session. NOVA does not store voice transcripts, and public web lookup is skipped for personal operational questions.
             </p>
           </div>
 
@@ -187,20 +282,23 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm text-zinc-400">Recognized command</p>
-              <h3 className="mt-1 text-xl font-semibold text-white">{result.label}</h3>
+              <h3 className="mt-1 text-xl font-semibold text-white">{displayTitle}</h3>
             </div>
-            <StatusBadge tone={result.safety === "local-route" ? "green" : result.safety === "advisory" ? "cyan" : "amber"}>{result.safety.replaceAll("-", " ")}</StatusBadge>
+            <StatusBadge tone={displaySafety === "local-route" ? "green" : displaySafety === "advisory" ? "cyan" : "amber"}>
+              {displaySafety.replaceAll("-", " ")}
+            </StatusBadge>
           </div>
 
           <p className="mt-3 rounded-md border border-occ-line bg-occ-ink/80 p-3 text-sm text-zinc-300">
-            {transcript || "Say: NOVA brief me"}
+            {transcript || "Say: NOVA brief me, or ask a question"}
           </p>
-          <p className="mt-3 text-sm text-zinc-400">{result.response}</p>
+          <p className="mt-3 text-sm text-zinc-300">{displayResponse}</p>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <StatusBadge tone="neutral">Confidence {confidence}</StatusBadge>
-            {result.requiresConfirmation ? <StatusBadge tone="amber">Needs review</StatusBadge> : <StatusBadge tone="green">Safe route</StatusBadge>}
-            {result.route ? (
+            {answer?.usedWeb ? <StatusBadge tone="cyan">Web used</StatusBadge> : null}
+            {result.requiresConfirmation && !answer ? <StatusBadge tone="amber">Needs review</StatusBadge> : <StatusBadge tone="green">Answered</StatusBadge>}
+            {displayRoute ? (
               <button
                 type="button"
                 onClick={openTarget}
@@ -212,12 +310,36 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
             ) : null}
           </div>
 
+          {answer?.sources.length ? (
+            <div className="mt-4 rounded-md border border-occ-line bg-occ-ink/70 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Sources</p>
+              <div className="mt-2 space-y-2">
+                {answer.sources.map((item, index) => (
+                  <div key={`${item.label}-${item.source}-${index}`} className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+                    <StatusBadge tone={item.freshness === "live" || item.freshness === "recent" ? "green" : item.freshness === "fallback" ? "amber" : "red"}>
+                      {item.freshness}
+                    </StatusBadge>
+                    {item.url ? (
+                      <a href={item.url} target="_blank" className="inline-flex items-center gap-1 text-occ-cyan hover:text-white">
+                        {item.source}
+                        <ExternalLink size={12} />
+                      </a>
+                    ) : (
+                      <span>{item.source}</span>
+                    )}
+                    {item.detail ? <span className="text-zinc-600">{item.detail}</span> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {quickCommands.map((command) => (
               <button
                 type="button"
                 key={command}
-                onClick={() => runCommand(command)}
+                onClick={() => void runCommand(command)}
                 className="focus-ring min-h-10 rounded-md border border-occ-line bg-occ-ink/80 px-3 text-left text-sm text-zinc-300 transition hover:border-occ-cyan/50 hover:text-white"
               >
                 {command}
