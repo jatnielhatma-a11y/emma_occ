@@ -84,3 +84,13 @@ test("NOVA workflow migration keeps Google data private and actionable", () => {
   assert.match(migration, /done_at timestamptz/i);
   assert.doesNotMatch(migration, /googleapis\.com\/calendar\/v3\/calendars\/.*\/events.*patch/i);
 });
+
+test("Google Calendar import key migration removes fallback duplicates", () => {
+  const migration = readFileSync("supabase/migrations/20260714013000_stabilize_google_calendar_import_keys.sql", "utf8");
+
+  assert.match(migration, /partition by user_id, source_provider, source_event_id/i);
+  assert.match(migration, /source_calendar_id = 'primary'/i);
+  assert.match(migration, /drop constraint/i);
+  assert.match(migration, /nova_calendar_items_user_event_uidx/i);
+  assert.match(migration, /public\.nova_calendar_items\(user_id,\s*source_provider,\s*source_event_id\)/i);
+});

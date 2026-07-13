@@ -220,7 +220,7 @@ create table if not exists public.nova_calendar_items (
   synced_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (user_id, source_provider, source_calendar_id, source_event_id)
+  unique (user_id, source_provider, source_event_id)
 );
 
 create table if not exists public.nova_tasks (

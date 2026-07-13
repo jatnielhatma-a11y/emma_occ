@@ -153,8 +153,8 @@ export function specialDateTaskFromCalendarItem(item: ReturnType<typeof calendar
   return {
     user_id: item.user_id,
     source_provider: "google_calendar",
-    source_list_id: item.source_calendar_id,
-    source_task_id: `special-date:${item.source_calendar_id}:${item.source_event_id}`,
+    source_list_id: "google_calendar",
+    source_task_id: `special-date:${item.source_event_id}`,
     source_kind: "special_date",
     title: item.title,
     notes: item.description,
@@ -382,7 +382,7 @@ export async function syncGoogleContentForUser({
   if (calendarRows.length) {
     const { error } = await supabase
       .from("nova_calendar_items")
-      .upsert(calendarRows, { onConflict: "user_id,source_provider,source_calendar_id,source_event_id" });
+      .upsert(calendarRows, { onConflict: "user_id,source_provider,source_event_id" });
     if (error) errors.push(error.message);
   }
 

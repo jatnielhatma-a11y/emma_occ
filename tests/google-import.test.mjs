@@ -63,6 +63,8 @@ test("Google birthday events become special-date calendar items and NOVA reminde
   assert.equal(task.title, "Sam birthday");
   assert.equal(task.due_date, "2026-08-02");
   assert.equal(task.source_kind, "special_date");
+  assert.equal(task.source_list_id, "google_calendar");
+  assert.equal(task.source_task_id, "special-date:birthday-1");
 });
 
 test("Google Tasks map to NOVA tasks with due dates and completion", () => {
