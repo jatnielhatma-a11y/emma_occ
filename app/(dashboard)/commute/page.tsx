@@ -1,24 +1,12 @@
-import { MapPinned, Navigation, TimerReset } from "lucide-react";
+import { MapPinned } from "lucide-react";
 import { CommutePlanPanel } from "@/components/commute/CommutePlanPanel";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { LiveMissionPanel } from "@/components/nova/LiveMissionPanel";
 import { LocationPermissionPanel } from "@/components/nova/LocationPermissionPanel";
 import { buildPhase4CommutePlan } from "@/lib/commute/route-planner";
 import { fetchLiveWeather } from "@/lib/live-demo";
 import { fetchNsCommuteStatus } from "@/lib/ns-commute";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-function formatDateTime(value?: string | null) {
-  if (!value) return "Not recorded";
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: process.env.APP_TIMEZONE || "Europe/Amsterdam"
-  }).format(new Date(value));
-}
-
-function phaseLabel(value?: string | null) {
-  return value ? value.replaceAll("_", " ") : "not started";
-}
 
 export default async function CommutePage() {
   const supabase = await createSupabaseServerClient();
@@ -99,37 +87,12 @@ export default async function CommutePage() {
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <LocationPermissionPanel />
 
-        <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
-          <div className="flex items-center gap-2">
-            <Navigation size={18} className="text-occ-cyan" />
-            <h2 className="text-lg font-semibold text-white">Current mission</h2>
-          </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <span className="rounded-md bg-occ-ink p-3 text-sm text-zinc-400">
-              Phase
-              <strong className="mt-1 block text-white">{phaseLabel(activeMission?.current_phase)}</strong>
-            </span>
-            <span className="rounded-md bg-occ-ink p-3 text-sm text-zinc-400">
-              Latest location
-              <strong className="mt-1 block text-white">{activeMission?.latest_location_label ?? "No GPS event yet"}</strong>
-            </span>
-            <span className="rounded-md bg-occ-ink p-3 text-sm text-zinc-400">
-              Confidence
-              <strong className="mt-1 block text-white">
-                {typeof activeMission?.latest_confidence === "number" ? `${Math.round(activeMission.latest_confidence * 100)}%` : "Unknown"}
-              </strong>
-            </span>
-            <span className="rounded-md bg-occ-ink p-3 text-sm text-zinc-400">
-              Last event
-              <strong className="mt-1 block text-white">{formatDateTime(activeMission?.latest_event_at)}</strong>
-            </span>
-          </div>
-        </section>
+        <LiveMissionPanel initialMission={activeMission as any} initialEvents={(events ?? []) as any} />
       </div>
 
       <CommutePlanPanel initialPlan={commutePlan} direction={commutePlan.direction} />
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5">
         <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
           <div className="flex items-center gap-2">
             <MapPinned size={18} className="text-occ-cyan" />
@@ -154,29 +117,6 @@ export default async function CommutePage() {
           </div>
         </section>
 
-        <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
-          <div className="flex items-center gap-2">
-            <TimerReset size={18} className="text-occ-cyan" />
-            <h2 className="text-lg font-semibold text-white">Recent coarse events</h2>
-          </div>
-          <div className="mt-5 divide-y divide-occ-line">
-            {(events ?? []).length ? (
-              (events ?? []).map((event: any) => (
-                <div key={event.id} className="grid gap-2 py-3 sm:grid-cols-[1fr_130px] sm:items-center">
-                  <div>
-                    <p className="text-sm font-medium text-white">{event.coarse_location_label ?? "In transit"}</p>
-                    <p className="text-xs text-zinc-500">
-                      {phaseLabel(event.route_phase)} · {Math.round(Number(event.confidence ?? 0) * 100)}% · accuracy {event.accuracy_meters ?? "unknown"} m
-                    </p>
-                  </div>
-                  <span className="text-xs text-zinc-500">{formatDateTime(event.created_at)}</span>
-                </div>
-              ))
-            ) : (
-              <p className="py-8 text-sm text-zinc-500">No coarse location events stored yet.</p>
-            )}
-          </div>
-        </section>
       </div>
 
       <section className="rounded-lg border border-occ-line bg-occ-panel p-5">

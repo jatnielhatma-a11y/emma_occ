@@ -1,9 +1,10 @@
 "use client";
 
 import { LocateFixed, MapPin, Navigation, ShieldCheck } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { useI18n } from "@/components/i18n/LanguageProvider";
+import { GPS_LIVE_INTERVAL_MS, shouldSubmitLocationUpdate } from "@/lib/location/live-tracking";
 
 type PermissionStatus = "unknown" | "granted" | "denied" | "prompt";
 
@@ -37,6 +38,36 @@ type LocationEventResult = {
   storedCoarseEvent: boolean;
 };
 
+type MissionSnapshot = {
+  id?: string;
+  status?: string | null;
+  current_phase?: string | null;
+  latest_location_label?: string | null;
+  latest_confidence?: number | null;
+  latest_event_at?: string | null;
+};
+
+type LocationEventSummary = {
+  id: string;
+  event_type: string;
+  coarse_location_label: string | null;
+  confidence: number | null;
+  accuracy_meters: number | null;
+  route_phase: string | null;
+  created_at: string;
+};
+
+function phaseLabel(value?: string | null) {
+  return value ? value.replaceAll("_", " ") : "not started";
+}
+
+function formatTime(value?: string | null) {
+  if (!value) return "not updated";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "time unknown";
+  return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+
 export function LocationPermissionPanel() {
   const { t } = useI18n();
   const [status, setStatus] = useState<PermissionStatus>("unknown");
@@ -46,11 +77,26 @@ export function LocationPermissionPanel() {
   const [message, setMessage] = useState("");
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [direction, setDirection] = useState<"outbound" | "return">("outbound");
+  const [liveTracking, setLiveTracking] = useState(false);
+  const [mission, setMission] = useState<MissionSnapshot | null>(null);
+  const [events, setEvents] = useState<LocationEventSummary[]>([]);
+  const watchId = useRef<number | null>(null);
+  const lastSubmittedAt = useRef<number | null>(null);
+  const lastSubmittedPosition = useRef<PositionState | null>(null);
 
   const geocodedCount = useMemo(
     () => locations.filter((location) => typeof location.latitude === "number" && typeof location.longitude === "number").length,
     [locations]
   );
+
+  const refreshMission = useCallback(async () => {
+    const response = await fetch("/api/location/mission");
+    const payload = await response.json();
+    if (payload.ok) {
+      setMission(payload.mission ?? null);
+      setEvents(payload.events ?? []);
+    }
+  }, []);
 
   useEffect(() => {
     if ("permissions" in navigator) {
@@ -64,7 +110,18 @@ export function LocationPermissionPanel() {
     }
 
     refreshLocations();
-  }, []);
+    void refreshMission();
+  }, [refreshMission]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshMission();
+      }
+    }, 20_000);
+
+    return () => window.clearInterval(interval);
+  }, [refreshMission]);
 
   async function refreshLocations() {
     const response = await fetch("/api/location/geofences");
@@ -85,7 +142,38 @@ export function LocationPermissionPanel() {
     const payload = await response.json();
     if (payload.ok) {
       setLocationEnabled(enabled);
+      if (!enabled) stopLiveTracking();
       setMessage(enabled ? "Location services enabled." : "Location services disabled.");
+    } else {
+      setMessage(payload.error);
+    }
+  }
+
+  async function submitLocationEvent(next: PositionState, source = "browser") {
+    if (!locationEnabled) {
+      setMessage("Enable NOVA location before storing live commute progress.");
+      return;
+    }
+
+    const response = await fetch("/api/location/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        latitude: next.latitude,
+        longitude: next.longitude,
+        accuracyMeters: next.accuracyMeters,
+        capturedAt: next.capturedAt,
+        direction,
+        source
+      })
+    });
+    const payload = await response.json();
+    if (payload.ok) {
+      setEventResult(payload);
+      lastSubmittedAt.current = Date.now();
+      lastSubmittedPosition.current = next;
+      await refreshMission();
+      setMessage(payload.storedCoarseEvent ? "Live coarse location event stored." : "Live location classified without storing an event.");
     } else {
       setMessage(payload.error);
     }
@@ -125,25 +213,64 @@ export function LocationPermissionPanel() {
       return;
     }
 
-    setMessage("Checking geofences...");
-    const response = await fetch("/api/location/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracyMeters: position.accuracyMeters,
-        capturedAt: position.capturedAt,
-        direction
-      })
-    });
-    const payload = await response.json();
-    if (payload.ok) {
-      setEventResult(payload);
-      setMessage(payload.storedCoarseEvent ? "Coarse location event stored." : "Location classified without storing an event.");
-    } else {
-      setMessage(payload.error);
+    await submitLocationEvent(position, "manual");
+  }
+
+  function stopLiveTracking(updateState = true) {
+    if (watchId.current !== null && "geolocation" in navigator) {
+      navigator.geolocation.clearWatch(watchId.current);
     }
+    watchId.current = null;
+    if (updateState) setLiveTracking(false);
+  }
+
+  function startLiveTracking() {
+    if (!("geolocation" in navigator)) {
+      setStatus("denied");
+      setMessage("This browser does not expose GPS location.");
+      return;
+    }
+
+    if (!locationEnabled) {
+      setMessage("Enable NOVA location before starting live GPS.");
+      return;
+    }
+
+    stopLiveTracking();
+    setMessage("Starting live GPS updates...");
+    const id = navigator.geolocation.watchPosition(
+      (nextPosition) => {
+        const next = {
+          latitude: nextPosition.coords.latitude,
+          longitude: nextPosition.coords.longitude,
+          accuracyMeters: Math.round(nextPosition.coords.accuracy),
+          capturedAt: new Date().toISOString()
+        };
+        setStatus("granted");
+        setPosition(next);
+        setLiveTracking(true);
+
+        if (
+          shouldSubmitLocationUpdate({
+            nextPosition: next,
+            lastSubmittedPosition: lastSubmittedPosition.current,
+            lastSubmittedAt: lastSubmittedAt.current
+          })
+        ) {
+          void submitLocationEvent(next, "live-watch");
+        } else {
+          setMessage(`Live GPS active. Next routine update in about ${Math.round(GPS_LIVE_INTERVAL_MS / 60_000)} min.`);
+        }
+      },
+      () => {
+        setStatus("denied");
+        setLiveTracking(false);
+        setMessage("Live GPS permission denied or unavailable.");
+      },
+      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 15_000 }
+    );
+    watchId.current = id;
+    setLiveTracking(true);
   }
 
   async function bindCurrentPosition(location: SavedLocation) {
@@ -183,12 +310,18 @@ export function LocationPermissionPanel() {
       setPosition(null);
       setEventResult(null);
       setLocationEnabled(false);
+      stopLiveTracking();
       await refreshLocations();
+      await refreshMission();
       setMessage(payload.message);
     } else {
       setMessage(payload.error);
     }
   }
+
+  useEffect(() => {
+    return () => stopLiveTracking(false);
+  }, []);
 
   const tone = status === "granted" && locationEnabled ? "green" : status === "denied" ? "red" : "amber";
 
@@ -207,6 +340,7 @@ export function LocationPermissionPanel() {
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <StatusBadge tone={tone}>{locationEnabled ? "NOVA GPS enabled" : t(`location.${status}`)}</StatusBadge>
+        <StatusBadge tone={liveTracking ? "green" : "neutral"}>{liveTracking ? "live GPS active" : "live GPS paused"}</StatusBadge>
         <StatusBadge tone={geocodedCount ? "green" : "amber"}>{geocodedCount}/{locations.length} geofences ready</StatusBadge>
         {position ? <span className="text-sm text-zinc-500">Accuracy about {position.accuracyMeters} m</span> : null}
       </div>
@@ -217,6 +351,13 @@ export function LocationPermissionPanel() {
         </button>
         <button type="button" onClick={requestLocation} className="focus-ring rounded-md bg-occ-cyan px-3 py-2 text-sm font-semibold text-occ-ink">
           Request GPS point
+        </button>
+        <button
+          type="button"
+          onClick={liveTracking ? () => stopLiveTracking() : startLiveTracking}
+          className="focus-ring rounded-md border border-occ-cyan/40 bg-occ-cyan/10 px-3 py-2 text-sm font-semibold text-cyan-100"
+        >
+          {liveTracking ? "Stop live GPS" : "Start live GPS"}
         </button>
         <button type="button" onClick={deleteLocationData} className="focus-ring rounded-md border border-occ-red/40 bg-occ-red/10 px-3 py-2 text-sm font-semibold text-red-100 sm:col-span-2">
           Delete stored location data
@@ -257,6 +398,31 @@ export function LocationPermissionPanel() {
           </span>
         </div>
       ) : null}
+
+      <div className="mt-4 rounded-md border border-occ-line bg-occ-ink p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-white">Live mission state</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {mission?.latest_location_label ?? "No live GPS event yet"} · {phaseLabel(mission?.current_phase)} · updated{" "}
+              {formatTime(mission?.latest_event_at)}
+            </p>
+          </div>
+          <StatusBadge tone={mission?.status === "active" ? "green" : mission?.status === "completed" ? "cyan" : "neutral"}>
+            {mission?.status ?? "waiting"}
+          </StatusBadge>
+        </div>
+        {events.length ? (
+          <div className="mt-3 divide-y divide-occ-line">
+            {events.slice(0, 3).map((event) => (
+              <p key={event.id} className="py-2 text-xs text-zinc-500">
+                <span className="font-medium text-zinc-300">{event.coarse_location_label ?? "In transit"}</span> · {phaseLabel(event.route_phase)} ·{" "}
+                {Math.round(Number(event.confidence ?? 0) * 100)}% · {formatTime(event.created_at)}
+              </p>
+            ))}
+          </div>
+        ) : null}
+      </div>
 
       <div className="mt-4 space-y-2">
         {locations.slice(0, 4).map((location) => (
