@@ -1,6 +1,7 @@
 import { CalendarDays, CheckSquare, Gift, RefreshCw } from "lucide-react";
 import { CalendarSyncClient } from "@/components/calendar/CalendarSyncClient";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { TaskWorkflowActions } from "@/components/tasks/TaskWorkflowActions";
 import { googleServicesFromScope } from "@/lib/google/oauth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -32,6 +33,21 @@ function calendarTimeLabel(item: any) {
   return formatDateTime(item.starts_at);
 }
 
+function workflowTone(status?: string | null): "green" | "cyan" | "violet" | "neutral" {
+  if (status === "done") return "green";
+  if (status === "in_progress") return "cyan";
+  if (status === "accepted") return "violet";
+  return "neutral";
+}
+
+function workflowLabel(status?: string | null) {
+  if (status === "in_progress") return "In progress";
+  if (status === "accepted") return "Accepted";
+  if (status === "done") return "Done";
+  if (status === "dismissed") return "Dismissed";
+  return "New";
+}
+
 export default async function TasksPage() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -59,12 +75,13 @@ export default async function TasksPage() {
   const [{ data: tasks = [] }, { data: specialDates = [] }, { data: appointments = [] }, { count: openTaskCount = 0 }] = await Promise.all([
     supabase
       .from("nova_tasks")
-      .select("id,title,notes,status,due_at,due_date,source_provider,source_kind,source_url,synced_at")
+      .select("id,title,notes,status,due_at,due_date,source_provider,source_kind,source_url,synced_at,workflow_status,accepted_at,started_at,done_at")
       .eq("user_id", user?.id)
       .neq("status", "completed")
+      .neq("workflow_status", "done")
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("due_at", { ascending: true, nullsFirst: false })
-      .limit(12),
+      .limit(20),
     supabase
       .from("nova_calendar_items")
       .select("id,title,all_day_date,starts_at,item_kind,special_date_label,source_calendar_summary,html_link")
@@ -76,19 +93,21 @@ export default async function TasksPage() {
       .limit(8),
     supabase
       .from("nova_calendar_items")
-      .select("id,title,starts_at,all_day_date,is_all_day,item_kind,source_calendar_summary,location,html_link")
+      .select("id,title,starts_at,all_day_date,is_all_day,item_kind,source_calendar_summary,location,html_link,workflow_status,accepted_at,started_at,done_at")
       .eq("user_id", user?.id)
       .neq("item_kind", "special_date")
       .neq("status", "cancelled")
+      .neq("workflow_status", "done")
       .or(`starts_at.gte.${new Date().toISOString()},all_day_date.gte.${today}`)
       .order("starts_at", { ascending: true, nullsFirst: false })
       .order("all_day_date", { ascending: true, nullsFirst: false })
-      .limit(10),
+      .limit(20),
     supabase
       .from("nova_tasks")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user?.id)
       .neq("status", "completed")
+      .neq("workflow_status", "done")
   ]);
   const taskRows = tasks ?? [];
   const specialDateRows = specialDates ?? [];
@@ -102,7 +121,7 @@ export default async function TasksPage() {
             <p className="text-xs uppercase tracking-[0.18em] text-occ-cyan">NOVA Tasks</p>
             <h1 className="mt-2 text-3xl font-semibold text-white">Tasks, appointments, and special dates</h1>
             <p className="mt-3 max-w-3xl text-sm text-zinc-400">
-              NOVA imports Google Calendar appointments, birthdays, special dates, and Google Tasks into one operational view. Existing Google Tasks require the Tasks read-only scope, so reconnect Google if that status is not active.
+              NOVA imports live Google Calendar appointments, birthdays, special dates, and Google Tasks into one operational view. Accept, start, and complete items here without changing the original Google record.
             </p>
           </div>
           <StatusBadge tone={connected ? "green" : "amber"}>{connected ? "Google connected" : "Reconnect Google"}</StatusBadge>
@@ -145,13 +164,17 @@ export default async function TasksPage() {
           <div className="mt-5 divide-y divide-occ-line">
             {taskRows.length ? (
               taskRows.map((task: any) => (
-                <div key={task.id} className="grid gap-2 py-3 sm:grid-cols-[1fr_150px_110px] sm:items-center">
+                <div key={task.id} className="grid gap-3 py-3 sm:grid-cols-[1fr_150px_120px_230px] sm:items-center">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-white">{task.title}</p>
                     <p className="truncate text-xs text-zinc-500">{task.notes || task.source_provider}</p>
                   </div>
                   <span className="text-xs text-zinc-400">{taskDueLabel(task)}</span>
-                  <StatusBadge tone={task.source_kind === "special_date" ? "cyan" : "green"}>{task.source_kind}</StatusBadge>
+                  <div className="flex flex-wrap gap-2">
+                    <StatusBadge tone={task.source_kind === "special_date" ? "cyan" : "green"}>{task.source_kind}</StatusBadge>
+                    <StatusBadge tone={workflowTone(task.workflow_status)}>{workflowLabel(task.workflow_status)}</StatusBadge>
+                  </div>
+                  <TaskWorkflowActions id={task.id} itemType="task" workflowStatus={task.workflow_status ?? "new"} />
                 </div>
               ))
             ) : (
@@ -190,13 +213,17 @@ export default async function TasksPage() {
         <div className="mt-5 divide-y divide-occ-line">
           {appointmentRows.length ? (
             appointmentRows.map((item: any) => (
-              <div key={item.id} className="grid gap-2 py-3 sm:grid-cols-[1fr_170px_130px] sm:items-center">
+              <div key={item.id} className="grid gap-3 py-3 sm:grid-cols-[1fr_170px_150px_230px] sm:items-center">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-white">{item.title}</p>
                   <p className="truncate text-xs text-zinc-500">{item.location || item.source_calendar_summary}</p>
                 </div>
                 <span className="text-xs text-zinc-400">{calendarTimeLabel(item)}</span>
-                <StatusBadge tone={item.item_kind === "appointment" ? "green" : "cyan"}>{item.item_kind}</StatusBadge>
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge tone={item.item_kind === "appointment" ? "green" : "cyan"}>{item.item_kind}</StatusBadge>
+                  <StatusBadge tone={workflowTone(item.workflow_status)}>{workflowLabel(item.workflow_status)}</StatusBadge>
+                </div>
+                <TaskWorkflowActions id={item.id} itemType="appointment" workflowStatus={item.workflow_status ?? "new"} />
               </div>
             ))
           ) : (

@@ -213,6 +213,10 @@ create table if not exists public.nova_calendar_items (
   special_date_label text,
   attendees jsonb not null default '[]'::jsonb,
   metadata jsonb not null default '{}'::jsonb,
+  workflow_status text not null default 'new' check (workflow_status in ('new', 'accepted', 'in_progress', 'done', 'dismissed')),
+  accepted_at timestamptz,
+  started_at timestamptz,
+  done_at timestamptz,
   synced_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -235,6 +239,10 @@ create table if not exists public.nova_tasks (
   calendar_item_source_id text,
   source_url text,
   metadata jsonb not null default '{}'::jsonb,
+  workflow_status text not null default 'new' check (workflow_status in ('new', 'accepted', 'in_progress', 'done', 'dismissed')),
+  accepted_at timestamptz,
+  started_at timestamptz,
+  done_at timestamptz,
   synced_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -249,8 +257,10 @@ create index if not exists calendar_sync_logs_user_idx on public.calendar_sync_l
 create index if not exists calendar_sync_logs_key_idx on public.calendar_sync_logs(user_id, idempotency_key);
 create index if not exists nova_calendar_items_user_time_idx on public.nova_calendar_items(user_id, starts_at, all_day_date);
 create index if not exists nova_calendar_items_user_kind_idx on public.nova_calendar_items(user_id, item_kind, status);
+create index if not exists nova_calendar_items_user_workflow_idx on public.nova_calendar_items(user_id, workflow_status, starts_at, all_day_date);
 create index if not exists nova_tasks_user_due_idx on public.nova_tasks(user_id, due_date, due_at);
 create index if not exists nova_tasks_user_status_idx on public.nova_tasks(user_id, status);
+create index if not exists nova_tasks_user_workflow_idx on public.nova_tasks(user_id, workflow_status, due_date, due_at);
 
 alter table public.profiles enable row level security;
 alter table public.user_settings enable row level security;
