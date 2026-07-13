@@ -60,7 +60,7 @@ test("foundation registry covers required integrations and platform capabilities
   assert.equal(getMissingFoundationCapabilities().length, 0);
 });
 
-test("NOVA roadmap is active through Release 8", () => {
+test("NOVA roadmap is active through Release 9", () => {
   const { NOVA_RELEASES, getPlannedNovaModules } = loadNovaModules();
 
   assert.equal(NOVA_RELEASES.find((release) => release.id === 2)?.status, "active");
@@ -70,6 +70,7 @@ test("NOVA roadmap is active through Release 8", () => {
   assert.equal(NOVA_RELEASES.find((release) => release.id === 6)?.status, "active");
   assert.equal(NOVA_RELEASES.find((release) => release.id === 7)?.status, "active");
   assert.equal(NOVA_RELEASES.find((release) => release.id === 8)?.status, "active");
+  assert.equal(NOVA_RELEASES.find((release) => release.id === 9)?.status, "active");
   assert.equal(getPlannedNovaModules().length, 0);
 });
 

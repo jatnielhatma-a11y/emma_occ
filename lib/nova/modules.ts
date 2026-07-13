@@ -1,4 +1,4 @@
-export type NovaReleaseId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type NovaReleaseId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export type NovaModuleStatus = "active" | "foundation" | "planned";
 
@@ -410,6 +410,33 @@ export const NOVA_RELEASES: NovaRelease[] = [
         summary: "Tracks mobile PWA refinements, notification quality, accessibility follow-ups, monitoring noise, and operational runbook improvements.",
         capabilities: ["Mobile PWA polish", "Notification quality", "Monitoring tuning", "Accessibility follow-ups", "Runbook refinement"],
         privacyNotes: ["Monitoring improvements must not increase exposed personal data or include secrets in logs."]
+      }
+    ]
+  },
+  {
+    id: 9,
+    name: "Release 9",
+    title: "Mission Voice and Autonomous Intelligence",
+    status: "active",
+    goal: "Add a privacy-safe JARVIS-style voice command layer and mission-intelligence router without always-listening behavior or silent external actions.",
+    modules: [
+      {
+        id: "mission-voice-command",
+        name: "Mission Voice Command",
+        release: 9,
+        status: "active",
+        summary: "Push-to-talk voice commands route the user to daily brief, commute, calendar, notifications, settings, privacy, and optimization surfaces.",
+        capabilities: ["JARVIS-style voice command", "Push-to-talk", "Spoken replies", "Command routing", "Phone-ready control"],
+        privacyNotes: ["Voice transcripts are processed in the browser session and are not stored by default."]
+      },
+      {
+        id: "autonomous-mission-intelligence",
+        name: "Autonomous Mission Intelligence",
+        release: 9,
+        status: "foundation",
+        summary: "Mission priorities, predictive windows, next-best actions, and automation drafts are coordinated with explicit approval gates.",
+        capabilities: ["Mission priorities", "Predictive windows", "Next-best action", "Automation drafts", "Incident learning"],
+        privacyNotes: ["External actions remain advisory until the user explicitly confirms them."]
       }
     ]
   }

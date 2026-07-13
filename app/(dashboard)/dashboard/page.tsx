@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { WeeklyTimeline } from "@/components/dashboard/WeeklyTimeline";
 import { IntegrationHealthPanel } from "@/components/nova/IntegrationHealthPanel";
 import { LocationPermissionPanel } from "@/components/nova/LocationPermissionPanel";
+import { MissionVoicePanel } from "@/components/nova/MissionVoicePanel";
 import { MissionControl } from "@/components/nova/MissionControl";
 import { fetchLiveWeather } from "@/lib/live-demo";
 import { fetchNsCommuteStatus } from "@/lib/ns-commute";
@@ -224,6 +225,8 @@ export default async function DashboardPage() {
       />
 
       <DailyBriefPanel initialBrief={latestAiBrief as any} />
+
+      <MissionVoicePanel compact />
 
       <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
         <IntegrationHealthPanel health={integrationHealth} />

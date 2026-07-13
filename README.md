@@ -50,6 +50,12 @@ Release 8 adds `/optimization` for real-world feedback loops, commute accuracy l
 
 See `docs/nova-release-8-post-launch-optimization.md` for the optimization guardrails and storage notes.
 
+## NOVA Release 9 Mission Voice and Autonomous Intelligence
+
+Release 9 adds `/mission-intelligence` and a dashboard voice panel for a JARVIS-style, push-to-talk command layer. It can route daily brief, duty, commute, calendar, alerts, settings, privacy, and optimization commands while keeping transcripts unstored and external actions approval-gated.
+
+See `docs/nova-release-9-mission-intelligence.md` for the voice guardrails and command-routing notes.
+
 ## Phase 1 Scope
 
 Built in this phase:

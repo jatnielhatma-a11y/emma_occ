@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bell, BrainCircuit, CalendarClock, CheckSquare, Cpu, Fingerprint, Gauge, HeartHandshake, Inbox, LayoutDashboard, Network, Rocket, Route, Settings, Sparkles, TrafficCone } from "lucide-react";
+import { BarChart3, Bell, BrainCircuit, CalendarClock, CheckSquare, Cpu, Fingerprint, Gauge, HeartHandshake, Inbox, LayoutDashboard, Network, RadioTower, Rocket, Route, Settings, Sparkles, TrafficCone } from "lucide-react";
 import clsx from "clsx";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/nova-intelligence", labelKey: "nav.novaIntelligence", icon: Cpu },
   { href: "/production-readiness", labelKey: "nav.productionReadiness", icon: Rocket },
   { href: "/optimization", labelKey: "nav.optimization", icon: Sparkles },
+  { href: "/mission-intelligence", labelKey: "nav.missionIntelligence", icon: RadioTower },
   { href: "/dashboard#emma-occ", labelKey: "nav.occ", icon: Gauge },
   { href: "/calendar-sync", labelKey: "nav.calendar", icon: CalendarClock },
   { href: "/commute", labelKey: "nav.commute", icon: Route },
