@@ -1,7 +1,7 @@
 import type { ProviderResult } from "@/lib/providers/types";
 import { resilientFetch } from "../operations/resilience";
 
-export type GoogleRouteTravelMode = "DRIVE" | "BICYCLE" | "WALK";
+export type GoogleRouteTravelMode = "DRIVE" | "BICYCLE" | "WALK" | "TRANSIT";
 
 export type GoogleRouteSummary = {
   provider: "google-routes";
@@ -36,7 +36,7 @@ function routeUrl(origin: string, destination: string, mode: GoogleRouteTravelMo
     api: "1",
     origin,
     destination,
-    travelmode: mode === "DRIVE" ? "driving" : mode === "BICYCLE" ? "bicycling" : "walking"
+    travelmode: mode === "DRIVE" ? "driving" : mode === "BICYCLE" ? "bicycling" : mode === "TRANSIT" ? "transit" : "walking"
   });
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
@@ -101,6 +101,7 @@ export async function fetchGoogleRoute(input: GoogleRouteInput): Promise<Provide
           destination: { address: destination },
           travelMode: input.mode,
           routingPreference: input.mode === "DRIVE" ? "TRAFFIC_AWARE_OPTIMAL" : undefined,
+          departureTime: input.mode === "TRANSIT" ? new Date().toISOString() : undefined,
           computeAlternativeRoutes: true,
           languageCode: "en",
           units: "METRIC"

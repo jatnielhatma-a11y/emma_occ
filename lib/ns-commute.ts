@@ -94,8 +94,16 @@ export function buildGoogleMapsUrl(
   return `${GOOGLE_MAPS_DIRECTIONS_URL}?${params.toString()}`;
 }
 
-export function build9292PlannerUrl() {
-  return OV_9292_URL;
+export function build9292PlannerUrl(fromAddress?: string | null, toAddress?: string | null) {
+  const from = fromAddress?.trim();
+  const to = toAddress?.trim();
+  const params = new URLSearchParams();
+
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  params.set("time", "now");
+
+  return `${OV_9292_URL}en/planner?${params.toString()}`;
 }
 
 export function buildCommuteOptions({
@@ -147,8 +155,8 @@ export function buildCommuteOptions({
       detail: doorOrigin && doorDestination
         ? `Use 9292 for door-to-door public transport from ${doorOrigin} to ${doorDestination}.`
         : "Use 9292 for Dutch door-to-door public transport options across train, bus, tram, metro, and walking legs.",
-      toWorkUrl: build9292PlannerUrl(),
-      toHomeUrl: build9292PlannerUrl()
+      toWorkUrl: build9292PlannerUrl(doorOrigin, doorDestination),
+      toHomeUrl: build9292PlannerUrl(doorDestination, doorOrigin)
     },
     {
       id: "google-transit",

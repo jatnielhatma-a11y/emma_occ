@@ -1,7 +1,7 @@
 "use client";
 
 import { RefreshCw, Route, TriangleAlert } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import type { CommuteDirection, CommutePlan, CommuteRouteOption } from "@/lib/commute/route-planner";
 
@@ -12,6 +12,12 @@ type CommutePlanPanelProps = {
 
 function formatMinutes(value: number | null) {
   return typeof value === "number" ? `${value} min` : "Open planner";
+}
+
+function formatCheckedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "time unknown";
+  return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
 function OptionRow({ option }: { option: CommuteRouteOption }) {
@@ -45,7 +51,7 @@ export function CommutePlanPanel({ initialPlan, direction }: CommutePlanPanelPro
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function refreshPlan() {
+  const refreshPlan = useCallback(async (successMessage = "Route snapshot saved.") => {
     setLoading(true);
     setStatus("Checking route...");
     try {
@@ -57,13 +63,23 @@ export function CommutePlanPanel({ initialPlan, direction }: CommutePlanPanelPro
         return;
       }
       setPlan(payload.plan);
-      setStatus("Route snapshot saved.");
+      setStatus(successMessage);
     } catch {
       setStatus("Route refresh failed.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [direction]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshPlan("Route auto-refresh saved.");
+      }
+    }, 5 * 60_000);
+
+    return () => window.clearInterval(interval);
+  }, [refreshPlan]);
 
   return (
     <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
@@ -78,7 +94,7 @@ export function CommutePlanPanel({ initialPlan, direction }: CommutePlanPanelPro
           <StatusBadge tone={plan?.isLive ? "green" : "neutral"}>{plan?.isLive ? "live provider" : "fallback links"}</StatusBadge>
           <button
             type="button"
-            onClick={refreshPlan}
+            onClick={() => void refreshPlan()}
             disabled={loading}
             className="focus-ring inline-flex items-center gap-2 rounded-md bg-occ-cyan px-3 py-2 text-sm font-semibold text-occ-ink disabled:opacity-60"
           >
@@ -129,8 +145,9 @@ export function CommutePlanPanel({ initialPlan, direction }: CommutePlanPanelPro
           <div key={`${source.name}-${source.checkedAt}`} className="rounded-md bg-occ-ink p-3">
             <p className="text-sm font-medium text-white">{source.name}</p>
             <p className="mt-1 text-xs text-zinc-500">
-              {source.freshness} · {Math.round(source.confidence * 100)}%
+              {source.freshness} · {Math.round(source.confidence * 100)}% · checked {formatCheckedAt(source.checkedAt)}
             </p>
+            {source.error ? <p className="mt-2 text-xs text-amber-200">{source.error}</p> : null}
           </div>
         ))}
       </div>

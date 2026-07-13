@@ -425,7 +425,13 @@ const responseJsonSchema = {
   }
 };
 
-async function generateOpenAiAnswer(transcript: string, app: Awaited<ReturnType<typeof buildVoiceAppContext>>, web: { snippets: string[]; sources: NovaVoiceAnswerSource[] }, fallback: NovaVoiceAnswer) {
+async function generateOpenAiAnswer(
+  transcript: string,
+  app: Awaited<ReturnType<typeof buildVoiceAppContext>>,
+  web: { snippets: string[]; sources: NovaVoiceAnswerSource[] },
+  fallback: NovaVoiceAnswer,
+  useOpenAiWeb = false
+) {
   if (!process.env.OPENAI_API_KEY) return fallback;
 
   try {
@@ -438,8 +444,9 @@ async function generateOpenAiAnswer(transcript: string, app: Awaited<ReturnType<
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || "gpt-5.2",
         store: false,
+        tools: useOpenAiWeb ? [{ type: "web_search_preview" }] : undefined,
         instructions:
-          "You are NOVA Mission Voice. Answer the user's spoken request using authenticated NOVA app context first and public web evidence only when provided. Be concise, operational, and accurate. Do not invent data. Label fallback/unavailable sources. Return JSON only.",
+          "You are NOVA Mission Voice. Answer the user's spoken request using authenticated NOVA app context first. For public non-personal questions, use provided public web evidence and web search when available. Be concise, operational, and accurate. Do not invent data. Label fallback/unavailable sources. Return JSON only.",
         input: [
           {
             role: "user",
@@ -508,5 +515,5 @@ export async function answerNovaVoiceCommand({
   const web = shouldUseWeb ? await fetchWebLookup(transcript) : { snippets: [], sources: [] };
   const fallback = deterministicAnswer(transcript, app, web, command);
 
-  return generateOpenAiAnswer(transcript, app, web, fallback);
+  return generateOpenAiAnswer(transcript, app, web, fallback, shouldUseWeb);
 }

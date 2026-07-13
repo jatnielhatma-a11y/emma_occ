@@ -149,6 +149,59 @@ test("live NS trip can become the recommended route", async () => {
   assert.equal(plan.status, "green");
 });
 
+test("live Google transit can become the recommended public transport backup", async () => {
+  const { buildPhase4CommutePlan } = loadPlannerModule({
+    fetchGoogleRoute: async ({ mode }) => {
+      if (mode === "TRANSIT") {
+        return {
+          data: {
+            provider: "google-routes",
+            mode,
+            durationMinutes: 54,
+            staticDurationMinutes: 54,
+            distanceMeters: 61000,
+            delayMinutes: 0,
+            url: "https://www.google.com/maps/dir/?travelmode=transit"
+          },
+          source: {
+            name: "Google Routes",
+            retrievedAt: "2026-07-12T08:00:00.000Z",
+            freshness: "live",
+            confidence: 0.88,
+            isFallback: false
+          }
+        };
+      }
+
+      return {
+        data: {
+          provider: "google-routes",
+          mode,
+          durationMinutes: null,
+          staticDurationMinutes: null,
+          distanceMeters: null,
+          delayMinutes: 0,
+          url: "https://www.google.com/maps/dir/"
+        },
+        source: {
+          name: "Google Maps link",
+          retrievedAt: "2026-07-12T08:00:00.000Z",
+          freshness: "fallback",
+          confidence: 0.35,
+          isFallback: true,
+          error: "GOOGLE_MAPS_API_KEY is not configured."
+        }
+      };
+    }
+  });
+
+  const plan = await buildPhase4CommutePlan({ commute });
+
+  assert.equal(plan.recommended.id, "google-transit");
+  assert.equal(plan.recommended.isLive, true);
+  assert.ok(plan.sources.some((source) => source.name === "Google Routes" && source.isLive));
+});
+
 test("traffic delay downgrades the driving backup", async () => {
   const { buildPhase4CommutePlan } = loadPlannerModule({
     fetchNsLiveTrip: async () => ({

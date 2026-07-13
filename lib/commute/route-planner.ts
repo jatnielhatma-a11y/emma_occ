@@ -183,7 +183,7 @@ export async function buildPhase4CommutePlan(input: BuildCommutePlanInput = {}):
   const generatedAt = new Date().toISOString();
   const bufferMinutes = weatherBuffer(input.weather, input.routePreferences);
 
-  const [nsStatus, nsTrip, driveRoute, bikeRoute] = await Promise.all([
+  const [nsStatus, nsTrip, transitRoute, driveRoute, bikeRoute] = await Promise.all([
     fetchNsCommuteStatus({
       homeStation: points.homeStation,
       workStation: points.workStation,
@@ -193,6 +193,11 @@ export async function buildPhase4CommutePlan(input: BuildCommutePlanInput = {}):
     fetchNsLiveTrip({
       fromStation: points.originStation,
       toStation: points.destinationStation
+    }),
+    fetchGoogleRoute({
+      origin: points.origin,
+      destination: points.destination,
+      mode: "TRANSIT"
     }),
     fetchGoogleRoute({
       origin: points.origin,
@@ -264,7 +269,7 @@ export async function buildPhase4CommutePlan(input: BuildCommutePlanInput = {}):
       delayMinutes: driveRoute.data.delayMinutes
     });
   }
-  for (const source of [nsTrip.source, driveRoute.source, bikeRoute?.source].filter(Boolean) as ProviderSource[]) {
+  for (const source of [nsTrip.source, transitRoute.source, driveRoute.source, bikeRoute?.source].filter(Boolean) as ProviderSource[]) {
     if (source.isFallback) {
       incidents.push({
         type: "provider_fallback",
@@ -280,9 +285,10 @@ export async function buildPhase4CommutePlan(input: BuildCommutePlanInput = {}):
     direction === "outbound"
       ? buildNsPlannerUrl(points.homeStation, points.workStation)
       : buildNsPlannerUrl(points.workStation, points.homeStation);
-  const transitUrl = buildGoogleMapsUrl(points.origin, points.destination, "transit");
+  const transitUrl = transitRoute.data?.url || buildGoogleMapsUrl(points.origin, points.destination, "transit");
   const driveUrl = driveRoute.data?.url || buildGoogleMapsUrl(points.origin, points.destination, "driving");
   const bikeUrl = bikeRoute?.data?.url || buildGoogleMapsUrl(points.origin, points.destination, "bicycling");
+  const planner9292Url = build9292PlannerUrl(points.origin, points.destination);
   const nsDelay = nsTrip.data?.delayMinutes ?? 0;
   const nsRisk = optionRisk({
     delayMinutes: nsDelay + bufferMinutes,
@@ -293,6 +299,11 @@ export async function buildPhase4CommutePlan(input: BuildCommutePlanInput = {}):
   const roadRisk = optionRisk({
     delayMinutes: (driveRoute.data?.delayMinutes ?? 0) + bufferMinutes,
     fallback: driveRoute.source.isFallback
+  });
+  const transitRisk = optionRisk({
+    delayMinutes: (transitRoute.data?.delayMinutes ?? 0) + bufferMinutes,
+    fallback: transitRoute.source.isFallback,
+    warning: nsStatus.status !== "clear"
   });
 
   const options: CommuteRouteOption[] = [
@@ -320,18 +331,20 @@ export async function buildPhase4CommutePlan(input: BuildCommutePlanInput = {}):
     {
       id: "google-transit",
       rank: 2,
-      title: "Google transit comparison",
+      title: transitRoute.source.isFallback ? "Google transit planner" : "Live Google transit route",
       mode: "transit",
       action: "Compare station and walking legs",
-      detail: "Fallback cross-check for public transport routing and walking segments.",
-      durationMinutes: null,
-      delayMinutes: 0,
+      detail: transitRoute.data?.durationMinutes
+        ? `${transitRoute.data.durationMinutes} min transit estimate${transitRoute.data.delayMinutes ? `, ${transitRoute.data.delayMinutes} min delay` : ""}`
+        : "Cross-check public transport routing, station choice, and walking segments in Google Maps.",
+      durationMinutes: transitRoute.data?.durationMinutes ?? null,
+      delayMinutes: transitRoute.data?.delayMinutes ?? 0,
       transfers: null,
-      reliability: nsStatus.status === "clear" ? 0.72 : 0.58,
-      confidence: 0.42,
-      risk: "amber",
-      isLive: false,
-      source: "Google Maps link",
+      reliability: transitRisk === "green" ? 0.74 : transitRisk === "amber" ? 0.56 : 0.3,
+      confidence: transitRoute.source.confidence,
+      risk: transitRisk,
+      isLive: !transitRoute.source.isFallback && transitRoute.source.freshness === "live",
+      source: transitRoute.source.name,
       url: transitUrl
     },
     {
@@ -359,16 +372,16 @@ export async function buildPhase4CommutePlan(input: BuildCommutePlanInput = {}):
       title: "9292 public transport",
       mode: "multimodal",
       action: "Door-to-door OV backup",
-      detail: "Use as Dutch multimodal fallback when the rail route needs another check.",
+      detail: "Use as Dutch multimodal backup for train, bus, tram, metro, and walking legs. Full 9292 API access can replace this planner link when configured.",
       durationMinutes: null,
       delayMinutes: 0,
       transfers: null,
       reliability: 0.56,
-      confidence: 0.4,
+      confidence: 0.46,
       risk: "amber",
       isLive: false,
-      source: "9292 link",
-      url: build9292PlannerUrl()
+      source: "9292 planner",
+      url: planner9292Url
     }
   ];
 
@@ -404,8 +417,17 @@ export async function buildPhase4CommutePlan(input: BuildCommutePlanInput = {}):
       checkedAt: nsStatus.checkedAt
     },
     sourceFromProvider(nsTrip.source),
+    sourceFromProvider(transitRoute.source),
     sourceFromProvider(driveRoute.source),
-    ...(bikeRoute ? [sourceFromProvider(bikeRoute.source)] : [])
+    ...(bikeRoute ? [sourceFromProvider(bikeRoute.source)] : []),
+    {
+      name: "9292 planner",
+      freshness: "recent",
+      confidence: 0.46,
+      isLive: false,
+      checkedAt: generatedAt,
+      error: "9292 Reisadvies API credentials are not configured in NOVA; using the route-aware 9292 planner link."
+    }
   ];
 
   return {

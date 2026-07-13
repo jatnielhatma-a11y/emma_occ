@@ -20,7 +20,7 @@ function loadNsModule() {
   return module.exports;
 }
 
-const { analyzeNsCommuteHtml, buildGoogleMapsUrl, buildNsPlannerUrl } = loadNsModule();
+const { analyzeNsCommuteHtml, build9292PlannerUrl, buildGoogleMapsUrl, buildNsPlannerUrl } = loadNsModule();
 
 test("builds NS planner links for both commute directions", () => {
   const url = buildNsPlannerUrl("Amsterdam Centraal", "Utrecht Centraal");
@@ -85,6 +85,15 @@ test("builds Google Maps route links for commute comparison", () => {
   assert.match(url, /Utrecht\+Centraal/);
 });
 
+test("builds route-aware 9292 planner links", () => {
+  const url = build9292PlannerUrl("Lemmerstraat 18, Almere", "Admiraal Helfrichlaan 1, Utrecht");
+
+  assert.match(url, /9292\.nl\/en\/planner/);
+  assert.match(url, /Lemmerstraat\+18/);
+  assert.match(url, /Admiraal\+Helfrichlaan\+1/);
+  assert.match(url, /time=now/);
+});
+
 test("uses door-to-door addresses for Google commute options", () => {
   const status = analyzeNsCommuteHtml({
     html: "<html><title>Actuele situatie op het spoor | NS</title><body>Geen actuele storing rond de route.</body></html>",
@@ -100,4 +109,9 @@ test("uses door-to-door addresses for Google commute options", () => {
   assert.match(transit.toWorkUrl, /Lemmerstraat\+18/);
   assert.match(transit.toWorkUrl, /Admiraal\+Helfrichlaan\+1/);
   assert.match(transit.toHomeUrl, /1324\+BP\+Almere/);
+
+  const ov9292 = status.options.find((option) => option.id === "9292-ov");
+
+  assert.match(ov9292.toWorkUrl, /9292\.nl\/en\/planner/);
+  assert.match(ov9292.toWorkUrl, /Lemmerstraat\+18/);
 });
