@@ -41,6 +41,7 @@ type DashboardConflict = {
 };
 
 type LatestImport = {
+  id: string;
   status: string;
   filename: string;
   file_type: string;
@@ -83,12 +84,27 @@ export default async function DashboardPage() {
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
 
-  const { data: duties = [] } = await supabase
-    .from("duties")
-    .select("id,duty_date,start_time,end_time,duty_label,original_duty_code,location,is_overnight,is_off,is_sick_leave")
+  const { data: latestImport } = await supabase
+    .from("imports")
+    .select("id,status,filename,file_type,imported_at,row_count,comparison")
     .eq("user_id", user?.id)
-    .order("duty_date", { ascending: true })
-    .limit(180);
+    .order("imported_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let duties: unknown[] = [];
+  if (latestImport?.id) {
+    const { data } = await supabase
+      .from("duties")
+      .select("id,duty_date,start_time,end_time,duty_label,original_duty_code,location,notes,source_file,is_overnight,is_off,is_sick_leave")
+      .eq("user_id", user?.id)
+      .eq("import_id", latestImport.id)
+      .order("duty_date", { ascending: true })
+      .order("start_time", { ascending: true, nullsFirst: false })
+      .limit(370);
+
+    duties = data ?? [];
+  }
 
   const { data: conflicts = [] } = await supabase
     .from("conflict_logs")
@@ -103,14 +119,6 @@ export default async function DashboardPage() {
     .select("id", { count: "exact", head: true })
     .eq("user_id", user?.id)
     .is("resolved_at", null);
-
-  const { data: latestImport } = await supabase
-    .from("imports")
-    .select("status,filename,file_type,imported_at,row_count,comparison")
-    .eq("user_id", user?.id)
-    .order("imported_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
   const { data: calendarConnection } = await supabase
     .from("google_calendar_connections")

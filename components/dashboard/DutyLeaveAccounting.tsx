@@ -8,6 +8,7 @@ import {
   isVacationDuty,
   type AccountingDuty
 } from "@/lib/roster/accounting";
+import { currentLedgerDuties, shiftCodeDescription } from "@/lib/roster/ledger";
 import { StatusBadge } from "./StatusBadge";
 
 type DutyLeaveAccountingProps = {
@@ -53,7 +54,8 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
   }, [duties, key, persistMode]);
 
   const accounting = useMemo(() => calculateDutyAccounting(duties, sickLeaveIds, today), [duties, sickLeaveIds, today]);
-  const upcomingDuties = useMemo(() => duties.filter((duty) => duty.duty_date >= today).slice(0, 7), [duties, today]);
+  const ledgerDuties = useMemo(() => currentLedgerDuties(duties, today), [duties, today]);
+  const upcomingDuties = useMemo(() => ledgerDuties.slice(0, 7), [ledgerDuties]);
 
   async function toggleSickLeave(duty: AccountingDuty, checked: boolean) {
     const next = new Set(sickLeaveIds);
@@ -88,9 +90,13 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge tone={rowTone(duty, sickLeaveIds)}>{checked ? "Sick-leave / SL" : vacation ? "Vacation" : duty.duty_label}</StatusBadge>
+            <span className="rounded-md border border-occ-line bg-occ-ink px-2 py-1 text-xs text-zinc-300">
+              Code {duty.original_duty_code?.trim() || "n/a"}
+            </span>
             {duty.is_overnight ? <span className="text-xs text-zinc-500">overnight</span> : null}
           </div>
-          <p className="mt-1 truncate text-xs text-zinc-500">{duty.location ?? "n/a"}</p>
+          <p className="mt-1 truncate text-xs text-zinc-500">Shift code description: {shiftCodeDescription(duty)}</p>
+          <p className="mt-1 truncate text-xs text-zinc-600">{duty.location ?? "n/a"}</p>
         </div>
         <span className="text-sm text-zinc-400">{timeRange(duty)}</span>
         <label className="flex items-center gap-2 text-sm text-zinc-300">
@@ -170,11 +176,13 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-white">Duty ledger</h2>
-            <p className="text-sm text-zinc-500">All loaded duties, rest days, vacation, and sick-leave markings.</p>
+            <p className="text-sm text-zinc-500">Current-day-forward duties, rest days, vacation, and sick-leave markings.</p>
           </div>
-          <StatusBadge tone="cyan">{duties.length} entries</StatusBadge>
+          <StatusBadge tone="cyan">{ledgerDuties.length} from today</StatusBadge>
         </div>
-        <div className="mt-4">{duties.length ? duties.map((duty) => renderDutyRow(duty)) : <p className="py-8 text-sm text-zinc-500">Import a roster to populate the ledger.</p>}</div>
+        <div className="mt-4">
+          {ledgerDuties.length ? ledgerDuties.map((duty) => renderDutyRow(duty)) : <p className="py-8 text-sm text-zinc-500">No roster rows loaded from today onward.</p>}
+        </div>
       </section>
     </div>
   );

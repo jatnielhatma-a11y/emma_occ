@@ -48,10 +48,11 @@ function dutyDateTime(duty: NormalizedDuty, time: string, addDay = false) {
 }
 
 export function calendarTitleForDuty(duty: NormalizedDuty) {
-  if (duty.dutyLabel === "Night Shift") return "Night Shift";
-  if (duty.dutyLabel === "Late Shift") return "Late Shift";
-  if (duty.dutyLabel === "OFF Day") return "OFF Day";
-  return "Custom Duty";
+  const code = duty.originalDutyCode.trim();
+  const label = duty.dutyLabel.trim() || "Custom Duty";
+
+  if (!code || code.toLowerCase() === label.toLowerCase()) return label;
+  return `${code} - ${label}`;
 }
 
 export function buildCalendarEventDrafts(
@@ -66,6 +67,7 @@ export function buildCalendarEventDrafts(
     idempotencyKey: `duty:${fingerprint}`,
     title,
     description: [
+      `Shift code description: ${title}`,
       `Duty code: ${duty.originalDutyCode || "n/a"}`,
       `Label: ${duty.dutyLabel}`,
       duty.location ? `Location: ${duty.location}` : "",

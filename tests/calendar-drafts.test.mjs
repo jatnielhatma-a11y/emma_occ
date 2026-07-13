@@ -86,6 +86,8 @@ test("calendar drafts keep overnight duties in local roster time", () => {
   const drafts = buildCalendarEventDrafts(duty, { enabled: true, beforeMinutes: 45, afterMinutes: 45 });
 
   assert.equal(drafts.length, 3);
+  assert.equal(drafts[1].title, "382G - Night Shift");
+  assert.match(drafts[1].description, /Shift code description: 382G - Night Shift/);
   assert.equal(drafts[0].start, "2026-07-10T22:15:00");
   assert.equal(drafts[0].end, "2026-07-10T23:00:00");
   assert.equal(drafts[1].start, "2026-07-10T23:00:00");
@@ -139,7 +141,7 @@ test("off days are drafted as all-day calendar items", () => {
 
   const [draft] = buildCalendarEventDrafts(duty);
 
-  assert.equal(draft.title, "OFF Day");
+  assert.equal(draft.title, "OFF - OFF Day");
   assert.equal(draft.start, null);
   assert.equal(draft.end, null);
   assert.equal(draft.allDayDate, "2026-07-08");
