@@ -98,6 +98,25 @@ function specialDateLabel(event: GoogleCalendarEvent) {
   return event.birthdayProperties?.customTypeName ?? event.birthdayProperties?.type ?? "birthday";
 }
 
+function preferCalendarItem(candidate: ReturnType<typeof calendarEventToNovaItem>, existing?: ReturnType<typeof calendarEventToNovaItem>) {
+  if (!existing) return candidate;
+  if (existing.source_calendar_id === "primary" && candidate.source_calendar_id !== "primary") return candidate;
+  return existing;
+}
+
+export function dedupeGoogleCalendarRows(rows: Array<ReturnType<typeof calendarEventToNovaItem>>) {
+  const deduped = new Map<string, ReturnType<typeof calendarEventToNovaItem>>();
+  for (const row of rows) {
+    const key = `${row.user_id}:${row.source_provider}:${row.source_event_id}`;
+    deduped.set(key, preferCalendarItem(row, deduped.get(key)));
+  }
+  return [...deduped.values()];
+}
+
+function dedupeTaskRows<T extends { user_id: string; source_provider: string; source_list_id: string; source_task_id: string }>(rows: T[]) {
+  return [...new Map(rows.map((row) => [`${row.user_id}:${row.source_provider}:${row.source_list_id}:${row.source_task_id}`, row])).values()];
+}
+
 export function calendarEventToNovaItem({
   userId,
   calendar,
@@ -365,19 +384,22 @@ export async function syncGoogleContentForUser({
   const errors: string[] = [];
   const { timeMin, timeMax } = buildGoogleImportWindow(now);
   const calendars = await fetchCalendarList(accessToken, errors);
-  const calendarRows = [];
-  const specialDateTasks = [];
+  const rawCalendarRows = [];
+  const rawSpecialDateTasks = [];
 
   for (const calendar of calendars) {
     const events = await fetchEventsForCalendar({ accessToken, calendar, timeMin, timeMax, errors });
     for (const event of events) {
       if (!event.id) continue;
       const item = calendarEventToNovaItem({ userId, calendar, event, syncedAt });
-      calendarRows.push(item);
+      rawCalendarRows.push(item);
       const task = specialDateTaskFromCalendarItem(item);
-      if (task) specialDateTasks.push(task);
+      if (task) rawSpecialDateTasks.push(task);
     }
   }
+
+  const calendarRows = dedupeGoogleCalendarRows(rawCalendarRows);
+  const specialDateTasks = dedupeTaskRows(rawSpecialDateTasks);
 
   if (calendarRows.length) {
     const { error } = await supabase
@@ -401,12 +423,13 @@ export async function syncGoogleContentForUser({
       const tasks = await fetchTasksForList(accessToken, taskList, errors);
       taskRows.push(...tasks.filter((task) => task.id).map((task) => googleTaskToNovaTask({ userId, taskList, task, syncedAt })));
     }
-    if (taskRows.length) {
+    const dedupedTaskRows = dedupeTaskRows(taskRows);
+    if (dedupedTaskRows.length) {
       const { error } = await supabase
         .from("nova_tasks")
-        .upsert(taskRows, { onConflict: "user_id,source_provider,source_list_id,source_task_id" });
+        .upsert(dedupedTaskRows, { onConflict: "user_id,source_provider,source_list_id,source_task_id" });
       if (error) errors.push(error.message);
-      tasksSynced += taskRows.length;
+      tasksSynced += dedupedTaskRows.length;
     }
   } else {
     errors.push("Google Tasks scope is not granted yet. Reconnect Google to import Google Tasks.");

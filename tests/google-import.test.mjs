@@ -96,3 +96,31 @@ test("Google import window is bounded for operational freshness", () => {
   assert.equal(window.timeMin, "2026-06-13T00:00:00.000Z");
   assert.equal(window.timeMax, "2027-07-18T00:00:00.000Z");
 });
+
+test("Google Calendar rows dedupe primary fallback after reconnect", () => {
+  const event = {
+    id: "event-1",
+    summary: "Family dinner",
+    status: "confirmed",
+    start: { dateTime: "2026-07-14T18:00:00+02:00" },
+    end: { dateTime: "2026-07-14T20:00:00+02:00" }
+  };
+  const fallback = googleImport.calendarEventToNovaItem({
+    userId: "user-1",
+    calendar: { id: "primary", summary: "Primary calendar" },
+    syncedAt: "2026-07-14T10:00:00.000Z",
+    event
+  });
+  const realCalendar = googleImport.calendarEventToNovaItem({
+    userId: "user-1",
+    calendar: { id: "jatnielhatma@gmail.com", summary: "jatnielhatma@gmail.com" },
+    syncedAt: "2026-07-14T10:00:00.000Z",
+    event
+  });
+
+  const rows = googleImport.dedupeGoogleCalendarRows([fallback, realCalendar]);
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].source_calendar_id, "jatnielhatma@gmail.com");
+  assert.equal(rows[0].source_event_id, "event-1");
+});
