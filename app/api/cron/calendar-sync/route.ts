@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { syncGoogleCalendarForUser } from "@/lib/calendar/sync";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClient, hasSupabaseAdminConfig } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,16 @@ function isAuthorized(request: Request) {
 export async function GET(request: Request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
+  }
+
+  if (!hasSupabaseAdminConfig()) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Supabase admin key is not configured. Hourly Google sync is disabled until SUPABASE_SERVICE_ROLE_KEY is set."
+      },
+      { status: 503 }
+    );
   }
 
   const supabase = createSupabaseAdminClient();

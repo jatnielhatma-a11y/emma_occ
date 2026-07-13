@@ -2,7 +2,7 @@ import { hasGoogleOAuthConfig } from "@/lib/google/oauth";
 import { hasGoogleTokenEncryptionKey } from "@/lib/google/token-crypto";
 import { hasGoogleRoutesConfig } from "@/lib/maps/google-routes";
 import { hasNsApiConfig } from "@/lib/commute/ns-live";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClient, hasSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { errorMessage } from "./logger";
 import { resilientFetch } from "./resilience";
 
@@ -70,18 +70,20 @@ export async function buildProductionHealthReport(): Promise<ProductionHealthRep
         }
       );
 
-      let dataApiDetail = "Service-role database probe is not configured for public health.";
-      if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      let dataApiDetail = "Supabase admin key is missing; hourly background sync is disabled until configured.";
+      let supabaseStatus: HealthStatus = authHealth.ok ? "degraded" : "down";
+      if (hasSupabaseAdminConfig()) {
         const supabase = createSupabaseAdminClient();
         const { error } = await supabase.from("imports").select("id", { count: "exact", head: true }).limit(1);
         dataApiDetail = error ? `Database probe failed: ${error.message}` : "Database probe succeeded.";
+        supabaseStatus = authHealth.ok && !error ? "ok" : "down";
       }
 
       checks.push(
         check(
           "supabase",
           "Supabase",
-          authHealth.ok ? "ok" : "down",
+          supabaseStatus,
           authHealth.ok ? `Auth health endpoint responded. ${dataApiDetail}` : `Auth health endpoint returned ${authHealth.status}.`,
           authHealth.ok ? "live" : "unavailable",
           checkedAt
