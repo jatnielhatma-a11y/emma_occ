@@ -2,6 +2,12 @@
 
 Operational core for roster, commute execution, weather risk, Gmail attention items, and decision support.
 
+## NOVA Release 1 Foundation
+
+Emma OCC is preserved as the active operations module inside the NOVA personal operating system foundation. Release 1 adds a module registry, roadmap guardrails, and a `/platform` readiness surface while keeping later releases planned only.
+
+See `docs/NOVA_RELEASE_1_FOUNDATION.md` for the audit, architecture notes, and merge checklist.
+
 ## What works now
 
 - Mobile-first Next.js PWA dashboard
@@ -17,7 +23,7 @@ Operational core for roster, commute execution, weather risk, Gmail attention it
 
 ## Vercel environment variables
 
-Copy `.env.example` into Vercel Project Settings → Environment Variables.
+Copy `.env.example` into Vercel Project Settings -> Environment Variables.
 
 - `GOOGLE_ACCESS_TOKEN`: OAuth access token with Calendar and Gmail scopes
 - `GOOGLE_CALENDAR_ID`: normally `primary`
