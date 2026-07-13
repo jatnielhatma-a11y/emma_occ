@@ -135,7 +135,7 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
           </div>
           <p className="mt-4 text-xs uppercase tracking-[0.18em] text-occ-cyan">NOVA Mission Voice</p>
           <h2 className={compact ? "mt-2 text-2xl font-semibold text-occ-platinum" : "mt-2 text-3xl font-semibold text-occ-platinum"}>
-            JARVIS-style command layer
+            NOVA voice command layer
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-zinc-400">
             Speak one command at a time to open your brief, duty status, commute, calendar, alerts, settings, privacy controls, or optimization loops. NOVA listens only after you press the microphone.

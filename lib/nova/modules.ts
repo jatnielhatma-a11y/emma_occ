@@ -418,7 +418,7 @@ export const NOVA_RELEASES: NovaRelease[] = [
     name: "Release 9",
     title: "Mission Voice and Autonomous Intelligence",
     status: "active",
-    goal: "Add a privacy-safe JARVIS-style voice command layer and mission-intelligence router without always-listening behavior or silent external actions.",
+    goal: "Add a privacy-safe NOVA voice command layer and mission-intelligence router without always-listening behavior or silent external actions.",
     modules: [
       {
         id: "mission-voice-command",
@@ -426,7 +426,7 @@ export const NOVA_RELEASES: NovaRelease[] = [
         release: 9,
         status: "active",
         summary: "Push-to-talk voice commands route the user to daily brief, commute, calendar, notifications, settings, privacy, and optimization surfaces.",
-        capabilities: ["JARVIS-style voice command", "Push-to-talk", "Spoken replies", "Command routing", "Phone-ready control"],
+        capabilities: ["NOVA voice command", "Push-to-talk", "Spoken replies", "Command routing", "Phone-ready control"],
         privacyNotes: ["Voice transcripts are processed in the browser session and are not stored by default."]
       },
       {

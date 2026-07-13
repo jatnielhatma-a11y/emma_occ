@@ -2,7 +2,7 @@
 
 ## Goal
 
-Release 9 adds a JARVIS-style command layer to NOVA while preserving Emma OCC and the Release 1-8 architecture. The voice layer is designed for quick operational use on desktop and phone without always-listening behavior.
+Release 9 adds a NOVA voice command layer while preserving Emma OCC and the Release 1-8 architecture. The voice layer is designed for quick operational use on desktop and phone without always-listening behavior.
 
 ## Implemented Scope
 

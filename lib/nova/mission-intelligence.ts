@@ -211,7 +211,7 @@ export function release9SeedRecords(reviewedAt = new Date().toISOString()): Miss
     {
       focus: "voice_command",
       title: "Push-to-talk voice command",
-      detail: "Enable a JARVIS-style control surface with browser speech recognition, optional spoken replies, and no background listening.",
+      detail: "Enable a NOVA voice control surface with browser speech recognition, optional spoken replies, and no background listening.",
       status: "ready",
       impact: "medium",
       sourceFreshness: "live",
