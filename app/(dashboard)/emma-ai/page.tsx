@@ -19,8 +19,7 @@ export default async function EmmaAiPage() {
   const { count: importedMemoryCount = 0 } = await supabase
     .from("nova_ai_knowledge_items")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", user?.id)
-    .eq("source_kind", "chatgpt_export");
+    .eq("user_id", user?.id);
 
   return (
     <div className="space-y-5">

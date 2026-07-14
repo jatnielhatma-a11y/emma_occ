@@ -6,7 +6,7 @@ type SupabaseLike = {
   from(table: string): any;
 };
 
-type KnowledgeItem = {
+export type KnowledgeItem = {
   id?: string;
   title: string;
   summary: string;
@@ -132,12 +132,17 @@ async function storeKnowledgeItem(supabase: SupabaseLike, userId: string, item: 
   );
 }
 
-export async function importChatGptExport(supabase: SupabaseLike, userId: string, payload: unknown) {
-  const items = chatGptExportToKnowledgeItems(payload).slice(0, 500);
-  for (const item of items) {
+export async function importKnowledgeItems(supabase: SupabaseLike, userId: string, items: KnowledgeItem[], limit = 500) {
+  const boundedItems = items.slice(0, limit);
+  for (const item of boundedItems) {
     await storeKnowledgeItem(supabase, userId, item);
   }
-  return { imported: items.length };
+  return { imported: boundedItems.length };
+}
+
+export async function importChatGptExport(supabase: SupabaseLike, userId: string, payload: unknown) {
+  const items = chatGptExportToKnowledgeItems(payload).slice(0, 500);
+  return importKnowledgeItems(supabase, userId, items);
 }
 
 function fallbackAnswer(message: string, knowledgeItems: KnowledgeItem[]): NovaChatAnswer {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { importChatGptExport } from "@/lib/nova/openai-core";
+import { importChatGptExport, importKnowledgeItems } from "@/lib/nova/openai-core";
 import { logNovaAiEvent } from "@/lib/nova/ai-database";
+import { isNovaReferenceDatabasePayload, novaReferenceDatabaseToKnowledgeItems, summarizeNovaReferenceDatabase } from "@/lib/nova/reference-database";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -18,15 +19,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Upload a ChatGPT conversations JSON export." }, { status: 400 });
   }
 
-  const result = await importChatGptExport(supabase, user.id, payload.export ?? payload);
+  const importPayload = payload.export ?? payload;
+  const isReferenceDatabase = isNovaReferenceDatabasePayload(importPayload);
+  const result = isReferenceDatabase
+    ? await importKnowledgeItems(supabase, user.id, novaReferenceDatabaseToKnowledgeItems(importPayload))
+    : await importChatGptExport(supabase, user.id, importPayload);
+  const referenceSummary = isReferenceDatabase ? summarizeNovaReferenceDatabase(importPayload) : null;
+
   await logNovaAiEvent(supabase, user.id, {
     eventType: "system",
-    intent: "chatgpt_export_import",
+    intent: isReferenceDatabase ? "nova_reference_database_import" : "chatgpt_export_import",
     status: "completed",
     generatedBy: "system",
     sourceCount: result.imported,
-    metadata: { imported: result.imported, rawExportStored: false }
+    metadata: isReferenceDatabase
+      ? { imported: result.imported, rawDatabaseStored: false, referenceSummary }
+      : { imported: result.imported, rawExportStored: false }
   });
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, importKind: isReferenceDatabase ? "nova_reference_database" : "chatgpt_export", ...result });
 }

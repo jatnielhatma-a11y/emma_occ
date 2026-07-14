@@ -56,7 +56,7 @@ export function NovaChatPanel({ importedMemoryCount = 0 }: { importedMemoryCount
   async function importFile(file?: File | null) {
     if (!file) return;
     setIsWorking(true);
-    setStatus("Importing ChatGPT export...");
+      setStatus("Importing private NOVA memory...");
     try {
       const text = await file.text();
       const json = JSON.parse(text);
@@ -70,10 +70,14 @@ export function NovaChatPanel({ importedMemoryCount = 0 }: { importedMemoryCount
         setStatus(payload.error || "Import failed.");
       } else {
         setMemoryCount((count) => count + payload.imported);
-        setStatus(`Imported ${payload.imported} ChatGPT conversation memory item(s).`);
+        setStatus(
+          payload.importKind === "nova_reference_database"
+            ? `Imported ${payload.imported} NOVA reference memory item(s).`
+            : `Imported ${payload.imported} ChatGPT conversation memory item(s).`
+        );
       }
     } catch {
-      setStatus("Import failed. Upload the extracted conversations.json file from your ChatGPT export.");
+      setStatus("Import failed. Upload ChatGPT conversations.json or a NOVA reference import JSON file.");
     } finally {
       setIsWorking(false);
     }
@@ -91,7 +95,7 @@ export function NovaChatPanel({ importedMemoryCount = 0 }: { importedMemoryCount
           <p className="mt-4 text-xs uppercase tracking-[0.18em] text-occ-cyan">NOVA AI Core</p>
           <h2 className="mt-2 text-2xl font-semibold text-occ-platinum">ChatGPT-powered NOVA assistant</h2>
           <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-            Ask NOVA using live app context, optional OpenAI web search, and imported ChatGPT export memory. NOVA cannot read your private ChatGPT account directly; import an export file to make prior chats available here.
+            Ask NOVA using live app context, optional OpenAI web search, and imported private memory. NOVA can use ChatGPT exports or NOVA reference imports, but it cannot read your private ChatGPT account directly.
           </p>
         </div>
         <span className="grid h-12 w-12 place-items-center rounded-md border border-occ-cyan/30 bg-occ-cyan/10 text-occ-cyan">
@@ -138,7 +142,7 @@ export function NovaChatPanel({ importedMemoryCount = 0 }: { importedMemoryCount
 
           <label className="focus-ring mt-4 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-occ-line bg-occ-panel2 px-3 text-sm font-semibold text-zinc-200 hover:border-occ-cyan/50 hover:text-white">
             <Upload size={16} />
-            Import ChatGPT conversations.json
+            Import ChatGPT or NOVA reference JSON
             <input type="file" accept="application/json,.json" onChange={(event) => void importFile(event.target.files?.[0])} className="hidden" />
           </label>
         </div>
@@ -160,7 +164,7 @@ export function NovaChatPanel({ importedMemoryCount = 0 }: { importedMemoryCount
               ))
             ) : (
               <p className="rounded-md border border-occ-line bg-occ-ink p-3 text-sm text-zinc-500">
-                NOVA is ready. Imported ChatGPT conversations become private NOVA memory items after you upload your export JSON.
+                NOVA is ready. Imported ChatGPT conversations or NOVA reference files become private NOVA memory items after upload.
               </p>
             )}
           </div>
