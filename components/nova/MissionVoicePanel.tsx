@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useMemo, useRef, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Command, ExternalLink, Loader2, Mic, MicOff, Navigation, Search, ShieldCheck, Volume2 } from "lucide-react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -50,6 +50,37 @@ const quickCommands = [
   "What is NOVA learning?"
 ];
 
+const novaVoiceNames = [
+  "daniel",
+  "google uk english male",
+  "microsoft george",
+  "microsoft ryan",
+  "microsoft oliver",
+  "arthur",
+  "oliver",
+  "alex",
+  "google uk english"
+];
+
+function preferredNovaVoice(voices: SpeechSynthesisVoice[]) {
+  return (
+    voices.find((voice) => novaVoiceNames.some((name) => voice.name.toLowerCase().includes(name))) ??
+    voices.find((voice) => voice.lang.toLowerCase().startsWith("en-gb")) ??
+    voices.find((voice) => voice.lang.toLowerCase().startsWith("en"))
+  );
+}
+
+function polishForSpeech(text: string) {
+  return text
+    .replace(/\bNOVA\b/g, "Nova")
+    .replace(/\bGPS\b/g, "G P S")
+    .replace(/\bNS\b/g, "N S")
+    .replace(/\bUTC\b/g, "U T C")
+    .replace(/\bAI\b/g, "A I")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -57,6 +88,8 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
   const [isThinking, setIsThinking] = useState(false);
   const [speechAvailable, setSpeechAvailable] = useState(true);
   const [spokenReplies, setSpokenReplies] = useState(false);
+  const [cinematicVoice, setCinematicVoice] = useState(true);
+  const [voiceReady, setVoiceReady] = useState(false);
   const [allowWeb, setAllowWeb] = useState(true);
   const [transcript, setTranscript] = useState("");
   const [typedPrompt, setTypedPrompt] = useState("");
@@ -65,12 +98,34 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
 
   const confidence = useMemo(() => `${Math.round((answer?.confidence ?? result.confidence) * 100)}%`, [answer?.confidence, result.confidence]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    const refreshVoices = () => setVoiceReady(window.speechSynthesis.getVoices().length > 0);
+    refreshVoices();
+    window.speechSynthesis.onvoiceschanged = refreshVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
   function speak(text: string) {
     if (spokenReplies && typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.95;
-      utterance.pitch = 0.96;
+      const utterance = new SpeechSynthesisUtterance(polishForSpeech(text));
+      const voice = cinematicVoice ? preferredNovaVoice(window.speechSynthesis.getVoices()) : undefined;
+
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = cinematicVoice ? "en-GB" : "en-US";
+      }
+
+      utterance.rate = cinematicVoice ? 0.86 : 0.95;
+      utterance.pitch = cinematicVoice ? 0.78 : 0.96;
+      utterance.volume = 1;
       window.speechSynthesis.speak(utterance);
     }
   }
@@ -221,6 +276,8 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge tone="green">Release 9 active</StatusBadge>
             <StatusBadge tone="cyan">Push-to-talk</StatusBadge>
+            <StatusBadge tone={cinematicVoice ? "cyan" : "neutral"}>{cinematicVoice ? "Cinematic voice" : "Standard voice"}</StatusBadge>
+            <StatusBadge tone={voiceReady ? "green" : "amber"}>{voiceReady ? "Voice ready" : "System voice loading"}</StatusBadge>
             <StatusBadge tone={allowWeb ? "green" : "neutral"}>{allowWeb ? "Web lookup on" : "App only"}</StatusBadge>
             <StatusBadge tone="neutral">No transcript storage</StatusBadge>
           </div>
@@ -255,8 +312,21 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
             className="focus-ring mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-occ-line bg-occ-panel2 px-3 text-sm text-zinc-200 transition hover:border-occ-cyan/50 hover:text-white"
           >
             <Volume2 size={17} />
-            {spokenReplies ? "Spoken replies on" : "Spoken replies off"}
+            {spokenReplies ? "NOVA voice on" : "NOVA voice off"}
           </button>
+
+          <label className="mt-3 flex items-center justify-between gap-4 rounded-md border border-occ-line bg-occ-panel2 px-3 py-3 text-sm text-zinc-300">
+            <span className="flex items-center gap-2">
+              <Volume2 size={16} className="text-occ-cyan" />
+              Cinematic NOVA voice
+            </span>
+            <input
+              type="checkbox"
+              checked={cinematicVoice}
+              onChange={(event) => setCinematicVoice(event.target.checked)}
+              className="h-5 w-5 accent-occ-cyan"
+            />
+          </label>
 
           <label className="mt-3 flex items-center justify-between gap-4 rounded-md border border-occ-line bg-occ-panel2 px-3 py-3 text-sm text-zinc-300">
             <span className="flex items-center gap-2">
@@ -297,7 +367,7 @@ export function MissionVoicePanel({ compact = false }: { compact?: boolean }) {
               <span>Privacy mode</span>
             </div>
             <p className="mt-2 text-zinc-500">
-              Commands are answered for the current session. NOVA does not store voice transcripts, and public web lookup is skipped for personal operational questions.
+              Commands are answered for the current session. NOVA does not store voice transcripts, public web lookup is skipped for personal operational questions, and speech uses your device&apos;s local browser voice.
             </p>
           </div>
 
