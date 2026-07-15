@@ -17,6 +17,41 @@ export type KnowledgeItem = {
   metadata?: Record<string, unknown>;
 };
 
+const stopWords = new Set([
+  "about",
+  "after",
+  "again",
+  "also",
+  "and",
+  "are",
+  "best",
+  "can",
+  "could",
+  "day",
+  "for",
+  "from",
+  "have",
+  "how",
+  "into",
+  "make",
+  "my",
+  "nova",
+  "option",
+  "options",
+  "please",
+  "should",
+  "that",
+  "the",
+  "this",
+  "through",
+  "to",
+  "use",
+  "what",
+  "when",
+  "with",
+  "you"
+]);
+
 export const novaChatRequestSchema = z.object({
   message: z.string().trim().min(1).max(4000),
   allowWeb: z.boolean().default(true),
@@ -57,6 +92,81 @@ function excerpt(value: string, limit = 3200) {
   return value.replace(/\s+/g, " ").trim().slice(0, limit);
 }
 
+function tokensFromMessage(message: string) {
+  return Array.from(
+    new Set(
+      message
+        .toLowerCase()
+        .replace(/[^a-z0-9\u00c0-\u024f]+/gi, " ")
+        .split(/\s+/)
+        .map((token) => token.trim())
+        .filter((token) => token.length >= 3 && !stopWords.has(token))
+    )
+  );
+}
+
+function isNovaReferenceItem(item: KnowledgeItem) {
+  return item.source_identifier.startsWith("nova_reference_database_v1:") || item.metadata?.importedFrom === "nova_reference_database_v1";
+}
+
+function knowledgeText(item: KnowledgeItem) {
+  return `${item.title} ${item.summary} ${item.content_excerpt} ${item.source_identifier}`.toLowerCase();
+}
+
+function scoreKnowledgeItem(item: KnowledgeItem, tokens: string[]) {
+  const haystack = knowledgeText(item);
+  const tokenScore = tokens.reduce((score, token) => score + (haystack.includes(token) ? 3 : 0), 0);
+  const referenceScore = isNovaReferenceItem(item) ? 4 : 0;
+  const chatScore = item.source_kind === "nova_chat" ? 1 : 0;
+  return tokenScore + referenceScore + chatScore;
+}
+
+export function selectRelevantKnowledgeItems(items: KnowledgeItem[], message: string, limit = 14) {
+  const tokens = tokensFromMessage(message);
+  const seen = new Set<string>();
+  const ranked = [...items]
+    .map((item, index) => ({ item, index, score: scoreKnowledgeItem(item, tokens) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  const selected: KnowledgeItem[] = [];
+  for (const candidate of ranked) {
+    const key = `${candidate.item.source_kind}:${candidate.item.source_identifier}`;
+    if (seen.has(key)) continue;
+    if (candidate.score <= 0 && selected.length >= 6) continue;
+    selected.push(candidate.item);
+    seen.add(key);
+    if (selected.length >= limit) break;
+  }
+
+  return selected;
+}
+
+function knowledgeItemsForPrompt(items: KnowledgeItem[]) {
+  return items.map((item) => ({
+    title: item.title,
+    sourceKind: item.source_kind,
+    sourceIdentifier: item.source_identifier,
+    createdAt: item.source_created_at,
+    referenceDatabase: isNovaReferenceItem(item),
+    summary: item.summary,
+    excerpt: excerpt(item.content_excerpt, isNovaReferenceItem(item) ? 2200 : 1400),
+    metadata: item.metadata ?? {}
+  }));
+}
+
+function buildNovaDecisionInstructions() {
+  return [
+    "You are NOVA AI, a private personal operations and decision-support assistant inside the user's NOVA dashboard.",
+    "Use live NOVA app context first, then imported NOVA reference database and ChatGPT export memory, then public web search only when enabled and useful.",
+    "Cross-check conflicts between live data and imported memory. Treat live calendar, duty, commute, weather, and health/status data as fresher than historical reference records.",
+    "When the user asks for planning, decisions, risks, or options, answer with: current facts, cross-checks, predicted risks/opportunities, best option, backup option, and next action.",
+    "Label uncertainty and fallback data clearly. Never imply a source is live if it came from imported memory.",
+    "Do not claim access to the user's private ChatGPT account or private ChatGPT search history. Imported data is user-provided context only.",
+    "Do not perform calendar, email, notification, commute, memory, financial, medical, or external actions without explicit confirmation. You may draft recommendations and decision options.",
+    "Keep answers concise, practical, and mission-oriented."
+  ].join(" ");
+}
+
 export function chatGptExportToKnowledgeItems(payload: unknown): KnowledgeItem[] {
   const conversations = Array.isArray(payload) ? payload : Array.isArray((payload as any)?.conversations) ? (payload as any).conversations : [];
 
@@ -94,15 +204,15 @@ export function chatGptExportToKnowledgeItems(payload: unknown): KnowledgeItem[]
   return items.filter((item): item is KnowledgeItem => Boolean(item));
 }
 
-async function fetchKnowledgeItems(supabase: SupabaseLike, userId: string, enabled: boolean) {
+async function fetchKnowledgeItems(supabase: SupabaseLike, userId: string, enabled: boolean, message: string) {
   if (!enabled) return [] as KnowledgeItem[];
   const { data = [] } = await supabase
     .from("nova_ai_knowledge_items")
     .select("id,title,summary,content_excerpt,source_kind,source_identifier,source_created_at,metadata")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(10);
-  return (data ?? []) as KnowledgeItem[];
+    .limit(80);
+  return selectRelevantKnowledgeItems((data ?? []) as KnowledgeItem[], message);
 }
 
 function extractOutputText(payload: any) {
@@ -147,12 +257,12 @@ export async function importChatGptExport(supabase: SupabaseLike, userId: string
 
 function fallbackAnswer(message: string, knowledgeItems: KnowledgeItem[]): NovaChatAnswer {
   const memoryNote = knowledgeItems.length
-    ? ` I can also see ${knowledgeItems.length} imported NOVA/ChatGPT memory item(s), but OpenAI generation is not available right now.`
+    ? ` I can also see ${knowledgeItems.length} live Supabase reference item(s), including NOVA memory/reference records, but OpenAI generation is not available right now.`
     : "";
 
   return {
     ok: true,
-    answer: `NOVA AI is connected to the app context, but the OpenAI response service is currently unavailable or not configured. I received: "${excerpt(message, 240)}".${memoryNote}`,
+    answer: `NOVA AI is connected to live app context and private Supabase reference memory, but the OpenAI response service is currently unavailable or not configured. I received: "${excerpt(message, 240)}".${memoryNote}`,
     generatedBy: "fallback",
     usedWeb: false,
     usedImportedMemory: knowledgeItems.length > 0,
@@ -178,7 +288,7 @@ export async function answerNovaChat({
 }): Promise<NovaChatAnswer> {
   const [operationalContext, knowledgeItems] = await Promise.all([
     buildNovaOperationalContext(supabase, userId),
-    fetchKnowledgeItems(supabase, userId, useImportedMemory)
+    fetchKnowledgeItems(supabase, userId, useImportedMemory, message)
   ]);
   const fallback = fallbackAnswer(message, knowledgeItems);
 
@@ -196,21 +306,21 @@ export async function answerNovaChat({
         model,
         store: false,
         tools: allowWeb ? [{ type: "web_search" }] : undefined,
-        instructions:
-          "You are NOVA AI, a private personal operations assistant inside the user's NOVA dashboard. Use NOVA app data first, imported ChatGPT export memory only as user-provided context, and public web search only when useful. Do not claim access to the user's live ChatGPT account or private ChatGPT search history. Keep operational advice concise and label uncertainty.",
+        instructions: buildNovaDecisionInstructions(),
         input: [
           {
             role: "user",
             content: JSON.stringify({
               message,
               operationalContext,
-              importedMemory: knowledgeItems.map((item) => ({
-                title: item.title,
-                sourceKind: item.source_kind,
-                createdAt: item.source_created_at,
-                summary: item.summary,
-                excerpt: item.content_excerpt
-              }))
+              liveReferenceMode: {
+                enabled: useImportedMemory,
+                source: "Supabase nova_ai_knowledge_items",
+                selectedItemCount: knowledgeItems.length,
+                novaReferenceItemCount: knowledgeItems.filter(isNovaReferenceItem).length,
+                priority: "Cross-check live app data against selected private reference records before recommending decisions."
+              },
+              importedMemory: knowledgeItemsForPrompt(knowledgeItems)
             })
           }
         ]
@@ -244,7 +354,13 @@ export async function answerNovaChat({
         summary: excerpt(`user: ${message}\nnova: ${answer.answer}`, 900),
         content_excerpt: excerpt(`user: ${message}\nnova: ${answer.answer}`, 5000),
         source_created_at: new Date().toISOString(),
-        metadata: { generatedBy: answer.generatedBy, model: answer.model, usedWeb: answer.usedWeb }
+        metadata: {
+          generatedBy: answer.generatedBy,
+          model: answer.model,
+          usedWeb: answer.usedWeb,
+          referenceItemsUsed: knowledgeItems.length,
+          novaReferenceItemsUsed: knowledgeItems.filter(isNovaReferenceItem).length
+        }
       });
     }
 

@@ -66,6 +66,46 @@ test("NOVA chat request schema keeps privacy switches explicit", () => {
   assert.equal(openAiCore.novaChatRequestSchema.safeParse({ message: "" }).success, false);
 });
 
+test("NOVA reference knowledge is selected for live cross-check decisions", () => {
+  const selected = openAiCore.selectRelevantKnowledgeItems(
+    [
+      {
+        title: "Old unrelated exchange",
+        summary: "A casual note about coffee.",
+        content_excerpt: "coffee",
+        source_kind: "nova_chat",
+        source_identifier: "nova-chat:old",
+        source_created_at: "2026-07-12T08:00:00.000Z",
+        metadata: {}
+      },
+      {
+        title: "NOVA reference: trips, flights, accommodations, and ground transport",
+        summary: "Trip to Curaçao and Alicante with hotel, rental car, and timing context.",
+        content_excerpt: "Curaçao Wedding Mission 2026. Alicante & Murcia 2026. Hotel Nelva. Rental car.",
+        source_kind: "manual",
+        source_identifier: "nova_reference_database_v1:travel-missions",
+        source_created_at: "2026-07-14T00:00:00.000Z",
+        metadata: { importedFrom: "nova_reference_database_v1" }
+      },
+      {
+        title: "NOVA reference: briefing cadence and behavior rules",
+        summary: "Decision-focused daily brief rules with route, weather, schedule, and mission intelligence.",
+        content_excerpt: "Cross-check domains and recommend best action and backup.",
+        source_kind: "manual",
+        source_identifier: "nova_reference_database_v1:briefing-rules",
+        source_created_at: "2026-07-14T00:00:00.000Z",
+        metadata: { importedFrom: "nova_reference_database_v1" }
+      }
+    ],
+    "What is the best option for my Curacao travel mission?",
+    2
+  );
+
+  assert.equal(selected.length, 2);
+  assert.equal(selected[0].source_identifier, "nova_reference_database_v1:travel-missions");
+  assert.ok(selected.some((item) => item.source_identifier === "nova_reference_database_v1:briefing-rules"));
+});
+
 test("NOVA OpenAI memory migration uses RLS and avoids raw export storage", () => {
   const migration = readFileSync("supabase/migrations/20260714014500_nova_openai_memory.sql", "utf8");
 

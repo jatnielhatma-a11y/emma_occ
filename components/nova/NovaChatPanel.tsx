@@ -90,12 +90,12 @@ export function NovaChatPanel({ importedMemoryCount = 0 }: { importedMemoryCount
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge tone="green">OpenAI ready</StatusBadge>
             <StatusBadge tone={allowWeb ? "cyan" : "neutral"}>{allowWeb ? "Web search allowed" : "App only"}</StatusBadge>
-            <StatusBadge tone={useImportedMemory ? "green" : "neutral"}>{memoryCount} memory item(s)</StatusBadge>
+            <StatusBadge tone={useImportedMemory ? "green" : "neutral"}>{memoryCount} live reference item(s)</StatusBadge>
           </div>
           <p className="mt-4 text-xs uppercase tracking-[0.18em] text-occ-cyan">NOVA AI Core</p>
           <h2 className="mt-2 text-2xl font-semibold text-occ-platinum">ChatGPT-powered NOVA assistant</h2>
           <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-            Ask NOVA using live app context, optional OpenAI web search, and imported private memory. NOVA can use ChatGPT exports or NOVA reference imports, but it cannot read your private ChatGPT account directly.
+            Ask NOVA using live app context, optional OpenAI web search, and the private Supabase reference database. NOVA cross-checks imported memory with live duties, commute, calendar, weather, and operational state before recommending decisions.
           </p>
         </div>
         <span className="grid h-12 w-12 place-items-center rounded-md border border-occ-cyan/30 bg-occ-cyan/10 text-occ-cyan">
@@ -131,7 +131,7 @@ export function NovaChatPanel({ importedMemoryCount = 0 }: { importedMemoryCount
               <input type="checkbox" checked={allowWeb} onChange={(event) => setAllowWeb(event.target.checked)} className="h-5 w-5 accent-occ-cyan" />
             </label>
             <label className="flex items-center justify-between rounded-md border border-occ-line bg-occ-panel2 px-3 py-2">
-              Use imported memory
+              Use live reference database
               <input type="checkbox" checked={useImportedMemory} onChange={(event) => setUseImportedMemory(event.target.checked)} className="h-5 w-5 accent-occ-cyan" />
             </label>
             <label className="flex items-center justify-between rounded-md border border-occ-line bg-occ-panel2 px-3 py-2">
