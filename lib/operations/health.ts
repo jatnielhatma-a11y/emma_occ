@@ -2,6 +2,7 @@ import { hasGoogleOAuthConfig } from "@/lib/google/oauth";
 import { hasGoogleTokenEncryptionKey } from "@/lib/google/token-crypto";
 import { hasGoogleRoutesConfig } from "@/lib/maps/google-routes";
 import { hasNsApiConfig } from "@/lib/commute/ns-live";
+import { hasPushConfig } from "@/lib/notifications/push";
 import { createSupabaseAdminClient, hasSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { errorMessage } from "./logger";
 import { resilientFetch } from "./resilience";
@@ -132,11 +133,11 @@ export async function buildProductionHealthReport(): Promise<ProductionHealthRep
     check(
       "notifications",
       "Notifications",
-      configured(Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.VAPID_SUBJECT)),
-      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.VAPID_SUBJECT
+      configured(hasPushConfig()),
+      hasPushConfig()
         ? "Push notification keys are configured."
         : "In-app alerts work; push delivery requires VAPID configuration.",
-      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ? "recent" : "fallback",
+      hasPushConfig() ? "recent" : "fallback",
       checkedAt
     ),
     check(

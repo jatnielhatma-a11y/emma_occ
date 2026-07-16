@@ -1,4 +1,5 @@
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { getVapidPublicKey } from "@/lib/notifications/push";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function NotificationsPage() {
@@ -26,7 +27,7 @@ export default async function NotificationsPage() {
       <NotificationCenter
         initialEvents={(events ?? []) as any}
         subscriptionCount={subscriptionCount ?? 0}
-        vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
+        vapidPublicKey={getVapidPublicKey()}
       />
     </div>
   );

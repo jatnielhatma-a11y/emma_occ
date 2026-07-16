@@ -81,19 +81,28 @@ test("phase 7 health report labels fallback integrations without exposing secret
     serviceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
     maps: process.env.GOOGLE_MAPS_API_KEY,
     ns: process.env.NS_API_KEY,
-    openai: process.env.OPENAI_API_KEY
+    openai: process.env.OPENAI_API_KEY,
+    vapidPublicServer: process.env.VAPID_PUBLIC_KEY,
+    vapidPublic: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    vapidPrivate: process.env.VAPID_PRIVATE_KEY,
+    vapidSubject: process.env.VAPID_SUBJECT
   };
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   delete process.env.GOOGLE_MAPS_API_KEY;
   delete process.env.NS_API_KEY;
   delete process.env.OPENAI_API_KEY;
+  delete process.env.VAPID_PUBLIC_KEY;
+  delete process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  delete process.env.VAPID_PRIVATE_KEY;
+  delete process.env.VAPID_SUBJECT;
 
   const { buildProductionHealthReport } = loadTsModule("lib/operations/health.ts", {
     "@/lib/google/oauth": { hasGoogleOAuthConfig: () => false },
     "@/lib/google/token-crypto": { hasGoogleTokenEncryptionKey: () => false },
     "@/lib/maps/google-routes": { hasGoogleRoutesConfig: () => false },
     "@/lib/commute/ns-live": { hasNsApiConfig: () => false },
+    "@/lib/notifications/push": { hasPushConfig: () => false },
     "@/lib/supabase/admin": { createSupabaseAdminClient: () => ({}) },
     "./resilience": { resilientFetch: async () => ({ ok: false, status: 503 }) },
     "./logger": { errorMessage: (error) => error.message }
@@ -110,4 +119,8 @@ test("phase 7 health report labels fallback integrations without exposing secret
   restoreEnv("GOOGLE_MAPS_API_KEY", previous.maps);
   restoreEnv("NS_API_KEY", previous.ns);
   restoreEnv("OPENAI_API_KEY", previous.openai);
+  restoreEnv("VAPID_PUBLIC_KEY", previous.vapidPublicServer);
+  restoreEnv("NEXT_PUBLIC_VAPID_PUBLIC_KEY", previous.vapidPublic);
+  restoreEnv("VAPID_PRIVATE_KEY", previous.vapidPrivate);
+  restoreEnv("VAPID_SUBJECT", previous.vapidSubject);
 });

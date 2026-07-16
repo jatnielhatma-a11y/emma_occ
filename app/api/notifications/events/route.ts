@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { decideNotification, notificationFromDailyBrief } from "@/lib/notifications/rules";
+import { sendPushNotificationToUser } from "@/lib/notifications/push";
 import { defaultNotificationPreferences, notificationPreferencesSchema } from "@/lib/settings/preferences";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -159,7 +160,62 @@ export async function POST(request: Request) {
     : await supabase.from("notification_events").insert(eventPayload).select("*").single();
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, event, decision });
+
+  let pushDelivery = null;
+  if (decision.shouldNotify) {
+    try {
+      pushDelivery = await sendPushNotificationToUser(supabase, user.id, {
+        title: candidate.title,
+        body: candidate.body,
+        url: candidate.actionUrl ?? "/dashboard"
+      });
+
+      const nextStatus = pushDelivery.sent > 0 ? "sent" : "pending";
+      const nextMetadata = {
+        ...(event.metadata ?? {}),
+        pushDelivery
+      };
+      const { data: updatedEvent } = await supabase
+        .from("notification_events")
+        .update({
+          channel: pushDelivery.sent > 0 ? "push" : "in_app",
+          status: nextStatus,
+          sent_at: pushDelivery.sent > 0 ? new Date().toISOString() : null,
+          metadata: nextMetadata
+        })
+        .eq("user_id", user.id)
+        .eq("id", event.id)
+        .select("*")
+        .single();
+
+      if (updatedEvent) return NextResponse.json({ ok: true, event: updatedEvent, decision, pushDelivery });
+    } catch (pushError) {
+      const message = pushError instanceof Error ? pushError.message : "Push delivery failed.";
+      const { data: updatedEvent } = await supabase
+        .from("notification_events")
+        .update({
+          status: "failed",
+          metadata: {
+            ...(event.metadata ?? {}),
+            pushDelivery: {
+              attempted: 0,
+              sent: 0,
+              failed: 1,
+              expired: 0,
+              skippedReason: message
+            }
+          }
+        })
+        .eq("user_id", user.id)
+        .eq("id", event.id)
+        .select("*")
+        .single();
+
+      if (updatedEvent) return NextResponse.json({ ok: true, event: updatedEvent, decision, pushDelivery: updatedEvent.metadata?.pushDelivery ?? null });
+    }
+  }
+
+  return NextResponse.json({ ok: true, event, decision, pushDelivery });
 }
 
 export async function PATCH(request: Request) {

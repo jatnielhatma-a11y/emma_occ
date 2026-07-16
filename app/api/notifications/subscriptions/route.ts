@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getVapidPublicKey } from "@/lib/notifications/push";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const subscriptionSchema = z.object({
@@ -28,7 +29,7 @@ export async function GET() {
     .order("last_seen_at", { ascending: false });
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, subscriptions: data ?? [], vapidPublicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null });
+  return NextResponse.json({ ok: true, subscriptions: data ?? [], vapidPublicKey: getVapidPublicKey() });
 }
 
 export async function POST(request: Request) {
