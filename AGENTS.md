@@ -27,6 +27,10 @@ Build Emma OS as a reliable personal operations platform. Convert roster, calend
 - Target arrival buffer: 10–15 minutes
 
 ## Roster rules
+- The latest official roster from `no-reply@ns.nl` is the authoritative source of truth.
+- A newer official roster supersedes all older Emma-managed roster entries for the same schedule period.
+- Preserve unrelated personal calendar events.
+- Include official duty codes in event titles; do not keep generic duplicate shift titles.
 - 15:00–23:05 = Late Shift
 - 23:00–07:05 next day = Night Shift
 - Night Shift remains one event crossing midnight
@@ -36,6 +40,24 @@ Build Emma OS as a reliable personal operations platform. Convert roster, calend
 - Ambiguous roster data must be reviewed, never guessed
 - Revised schedules replace prior Emma-managed entries for the same period
 - Do not modify unrelated calendar events
+
+## Roster version management
+- Every imported roster must have: schedule period, source email ID, source timestamp, imported timestamp, version identifier, and status.
+- Valid statuses: `current`, `superseded`, `archived`, `review_required`.
+- Only one roster may be `current` for a schedule period.
+- When a newer official roster is accepted, mark the previous one `superseded`, replace only affected NS duties, recalculate workforce totals, and refresh commute missions.
+- Maintain an audit trail of added, removed, changed, and unchanged duties.
+
+## Roster confidence
+- Every current roster must expose a `RosterConfidence` score from 0–100 plus explicit reasons.
+- Suggested bands:
+  - 95–100 = Green: latest official roster validated and synchronized.
+  - 80–94 = Amber: official roster imported but one or more entries need attention.
+  - Below 80 = Red: roster/calendar conflict, missing source data, or unresolved ambiguity.
+- Confidence inputs include source authenticity, recency, completeness, parse certainty, calendar-sync success, duplicate status, and conflict status.
+- Never fake precision. Store the factor breakdown and last validation timestamp.
+- MOCC and WOCC must not present high-confidence operational recommendations from a Red roster.
+- A Red roster requires review before new commute notifications or workforce totals are treated as authoritative.
 
 ## Workforce rules
 - Standard known duty duration: 8h05m unless source data says otherwise
@@ -81,6 +103,8 @@ Use feature modules for Mission Center, MOCC, WOCC, Roster, Workforce, Intellige
 - Overnight duration
 - Duty/vacation/sick calculations
 - Duplicate/revision handling
+- Roster version state transitions
+- Roster-confidence calculation and gating
 - Calendar idempotency
 - Route ranking and recovery
 - Weather walking buffer
