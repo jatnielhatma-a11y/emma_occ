@@ -8,7 +8,9 @@ Jay, logistics planner and shift worker commuting between Almere and Utrecht.
 
 ## Core outcomes
 - Accurately interpret weekly work rosters.
+- Treat the latest official `no-reply@ns.nl` roster as the single source of truth.
 - Synchronize validated roster data to Google Calendar without duplicates.
+- Maintain roster versions, audit history, and confidence status.
 - Calculate scheduled and actual duty time, overtime, early relief, vacation, sick leave, and commute time.
 - Plan and monitor door-to-door commute missions.
 - Recover automatically when direct rail service is unavailable.
@@ -22,7 +24,7 @@ Shows today, next duty, current mission phase, countdown, ETA, buffer, risk, con
 Combines NS, Google Maps, 9292, weather, frequent routes, and live user updates to select the best route and recovery plan.
 
 ### WOCC — Workforce Operations Control Center
-Manages roster ingestion, duty classification, calendar synchronization, weekly/monthly/yearly hours, vacation, sick leave, overtime, and attendance metrics.
+Manages roster ingestion, duty classification, roster versions, calendar synchronization, weekly/monthly/yearly hours, vacation, sick leave, overtime, and attendance metrics.
 
 ### Intelligence Center
 Stores mission history and produces operational analytics, including planned versus actual performance.
@@ -42,6 +44,49 @@ Acts as the decision layer. It prioritizes safety, time-critical action, work co
 - VL: Vacation.
 - OFF Day, Vacation, and Sick Leave never create commute missions.
 - Target arrival buffer: 10–15 minutes.
+
+## Roster source-of-truth policy
+- The newest official roster received from `no-reply@ns.nl` is authoritative for its schedule period.
+- Older official versions become superseded and must no longer drive calendar, commute, or workforce calculations.
+- Importing a revision replaces only Emma-managed NS roster events in the affected period.
+- Personal appointments, reminders, travel, and unrelated calendar events remain untouched.
+- Calendar duty titles must include the official duty code where available.
+- Generic duplicate titles must be removed when a code-correct official duty exists.
+
+## Roster Version Manager
+Every roster record must include:
+- schedule week or covered period
+- source email ID
+- source sent timestamp
+- import timestamp
+- version identifier
+- status: Current, Superseded, Archived, or Review Required
+- parser version
+- change summary
+- audit events
+
+Only one roster may be Current for a schedule period. When a newer version is accepted, the old version becomes Superseded, affected calendar duties are reconciled idempotently, and all workforce and MOCC outputs are recalculated.
+
+## Roster Confidence
+Emma OS must calculate a Roster Confidence score from 0–100 with a factor breakdown and last-validated timestamp.
+
+Suggested bands:
+- 95–100: Green — official, complete, conflict-free, and synchronized.
+- 80–94: Amber — official but contains a limited issue requiring attention.
+- Below 80: Red — unresolved conflict, missing source data, failed sync, or ambiguous parsing.
+
+Confidence factors:
+- approved sender/authenticity
+- source recency and version ordering
+- date and time completeness
+- duty-code recognition
+- parsing certainty
+- duplicate detection
+- overlap/conflict detection
+- calendar synchronization success
+- reconciliation against the active schedule period
+
+Red confidence must block authoritative MOCC commute notifications and final workforce totals until reviewed. Amber may proceed only with the uncertainty clearly surfaced. Never display false precision; explain the factors driving the score.
 
 ## Workforce requirements
 Track scheduled duty, actual duty, late-shift hours, night-shift hours, overtime, early/late relief, OFF days, vacation days/hours, sick-leave days/hours, missed scheduled duty hours, commute hours, and weekly/monthly/yearly totals.
@@ -64,11 +109,13 @@ When the direct route fails, evaluate alternatives through Amsterdam Zuid, Amste
 - Action first.
 - Calm and concise.
 - No irrelevant details.
-- Notify only when action, route, risk, or mission confidence changes materially.
+- Notify only when action, route, risk, roster confidence, or mission confidence changes materially.
 
 ## Success metrics
 - Roster classification accuracy.
 - Zero duplicate calendar events.
+- Correct roster version transitions.
+- Roster-confidence calibration and issue detection.
 - On-time arrival rate.
 - ETA accuracy.
 - Mission-confidence calibration.
