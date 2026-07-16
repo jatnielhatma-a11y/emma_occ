@@ -43,7 +43,7 @@ test("duty ledger starts at the current day and keeps chronological order", () =
 });
 
 test("duty ledger keeps the rolling 10-day calendar window from today", () => {
-  const { currentLedgerDuties } = loadTsModule("lib/roster/ledger.ts");
+  const { currentLedgerDuties, ledgerEndDate } = loadTsModule("lib/roster/ledger.ts");
   const rows = currentLedgerDuties(
     [
       { id: "stale-yesterday", duty_date: "2026-07-15", start_time: "08:00", end_time: "16:05" },
@@ -56,6 +56,7 @@ test("duty ledger keeps the rolling 10-day calendar window from today", () => {
 
   assert.equal(rows[0].id, "today");
   assert.equal(rows.at(-1).id, "plus-nine");
+  assert.equal(ledgerEndDate("2026-07-16"), "2026-07-25");
   assert.equal(rows.some((row) => row.id === "stale-yesterday"), false);
   assert.equal(rows.some((row) => row.id === "plus-ten"), false);
 });

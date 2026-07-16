@@ -8,7 +8,7 @@ import {
   isVacationDuty,
   type AccountingDuty
 } from "@/lib/roster/accounting";
-import { currentLedgerDuties, shiftCodeDescription } from "@/lib/roster/ledger";
+import { currentLedgerDuties, ledgerEndDate, shiftCodeDescription } from "@/lib/roster/ledger";
 import { StatusBadge } from "./StatusBadge";
 
 type DutyLeaveAccountingProps = {
@@ -82,7 +82,7 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
       }, {}),
     [ledgerDuties]
   );
-  const ledgerEnd = ledgerDuties.at(-1)?.duty_date ?? today;
+  const ledgerEnd = ledgerEndDate(today);
 
   async function toggleSickLeave(duty: AccountingDuty, checked: boolean) {
     const next = new Set(sickLeaveIds);

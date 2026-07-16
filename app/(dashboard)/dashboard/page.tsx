@@ -17,7 +17,7 @@ import { fetchLiveWeather } from "@/lib/live-demo";
 import { fetchNsCommuteStatus } from "@/lib/ns-commute";
 import { buildIntegrationHealth } from "@/lib/providers/health";
 import { DUTY_MINUTES, formatDutyMinutes, isVacationDuty } from "@/lib/roster/accounting";
-import { currentLedgerDuties } from "@/lib/roster/ledger";
+import { currentLedgerDuties, ledgerEndDate } from "@/lib/roster/ledger";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
   const todayDuty = typedDuties.find((duty) => duty.duty_date === today);
   const nextDuty = typedDuties.find((duty) => duty.duty_date >= today && !duty.is_off);
   const dutyLedgerWindow = currentLedgerDuties(typedDuties, today);
-  const dutyLedgerEnd = dutyLedgerWindow.at(-1)?.duty_date ?? today;
+  const dutyLedgerEnd = ledgerEndDate(today);
   const workingDutyCount = typedDuties.filter((duty) => !duty.is_off && !isVacationDuty(duty)).length;
   const importWindow = typedLatestImport?.comparison?.window;
   const calendarSource = calendarSourceLabel(typedLatestImport);

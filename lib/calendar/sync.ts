@@ -20,6 +20,8 @@ type SupabaseLike = {
 type SyncResult = {
   ok: boolean;
   importId?: string;
+  dutyRowsSelected?: number;
+  dutyWindow?: { startDate: string; endDate: string };
   plan?: ReturnType<typeof buildCalendarSyncPlan>;
   googleContent?: GoogleContentSyncSummary;
   results?: Array<{ ok: boolean; idempotencyKey: string; eventId?: string }>;
@@ -63,11 +65,13 @@ export async function latestImportId(supabase: SupabaseLike, userId: string) {
 export async function syncGoogleCalendarForUser({
   supabase,
   userId,
-  importId
+  importId,
+  dutyWindow
 }: {
   supabase: SupabaseLike;
   userId: string;
   importId?: string | null;
+  dutyWindow?: { startDate: string; endDate: string } | null;
 }): Promise<SyncResult> {
   const activeImportId = importId ?? (await latestImportId(supabase, userId));
   const { data: connection } = await supabase
@@ -117,12 +121,17 @@ export async function syncGoogleCalendarForUser({
     return { ok: true, googleContent, skipped: true };
   }
 
-  const { data: duties = [] } = await supabase
+  let dutiesQuery = supabase
     .from("duties")
     .select("*")
     .eq("user_id", userId)
-    .eq("import_id", activeImportId)
-    .order("duty_date", { ascending: true });
+    .eq("import_id", activeImportId);
+
+  if (dutyWindow) {
+    dutiesQuery = dutiesQuery.gte("duty_date", dutyWindow.startDate).lte("duty_date", dutyWindow.endDate);
+  }
+
+  const { data: duties = [] } = await dutiesQuery.order("duty_date", { ascending: true });
 
   const { data: commute } = await supabase
     .from("commute_settings")
@@ -203,5 +212,5 @@ export async function syncGoogleCalendarForUser({
     .eq("id", connection.id);
   await supabase.from("imports").update({ status: nextImportStatus }).eq("id", activeImportId).eq("user_id", userId);
 
-  return { ok: true, importId: activeImportId, plan, googleContent, results };
+  return { ok: true, importId: activeImportId, dutyRowsSelected: duties.length, dutyWindow: dutyWindow ?? undefined, plan, googleContent, results };
 }

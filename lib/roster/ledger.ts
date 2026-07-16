@@ -20,10 +20,14 @@ export function currentLedgerDuties<T extends Pick<AccountingDuty, "duty_date" |
   return rollingLedgerDuties(duties, today, 10);
 }
 
-export function rollingLedgerDuties<T extends Pick<AccountingDuty, "duty_date" | "start_time" | "end_time">>(duties: T[], today: string, daysAhead = 10) {
+export function ledgerEndDate(today: string, daysAhead = 10) {
   const endDate = new Date(`${today}T00:00:00.000Z`);
   endDate.setUTCDate(endDate.getUTCDate() + Math.max(0, daysAhead - 1));
-  const end = endDate.toISOString().slice(0, 10);
+  return endDate.toISOString().slice(0, 10);
+}
+
+export function rollingLedgerDuties<T extends Pick<AccountingDuty, "duty_date" | "start_time" | "end_time">>(duties: T[], today: string, daysAhead = 10) {
+  const end = ledgerEndDate(today, daysAhead);
 
   return sortDutiesForLedger(duties).filter((duty) => duty.duty_date >= today && duty.duty_date <= end);
 }
