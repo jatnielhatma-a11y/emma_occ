@@ -67,6 +67,6 @@ test("duty ledger keeps the rolling 10-day calendar window from today", () => {
 test("shift code description combines roster code and shift label", () => {
   const { shiftCodeDescription } = loadTsModule("lib/roster/ledger.ts", { "./duty-codes": dutyCodes });
 
-  assert.match(shiftCodeDescription({ original_duty_code: "382G", duty_label: "Night Shift" }), /382G - Night Shift: Overnight operational duty/);
+  assert.match(shiftCodeDescription({ original_duty_code: "382G", duty_label: "Asd - NH Mcn" }), /382G - Asd - NH Mcn: Operational service code/);
   assert.match(shiftCodeDescription({ original_duty_code: "", duty_label: "Late Shift" }), /LATE - Late Shift: Late operational duty/);
 });

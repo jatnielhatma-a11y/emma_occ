@@ -4,11 +4,66 @@ export type DutyCodeDefinition = {
   code: string;
   label: string;
   description: string;
-  category: "working" | "off" | "reserve" | "vacation" | "custom";
+  category: "working" | "off" | "reserve" | "vacation" | "custom" | "service";
   aliases: string[];
 };
 
+const SERVICE_DUTY_CODES: DutyCodeDefinition[] = [
+  ["110L", "LMP 1"],
+  ["111L", "LMP 2"],
+  ["120L", "LMP 1"],
+  ["121L", "LMP 2"],
+  ["130L", "LMP 1"],
+  ["340H", "Oost Mcn"],
+  ["341H", "Oost Hc"],
+  ["342A", "Asd - Flevo Mcn"],
+  ["343A", "Asd - Flevo Hc"],
+  ["344G", "NH - Hfdo Mcn"],
+  ["345G", "NH - Hfdo Hc"],
+  ["346R", "Rtd Mcn"],
+  ["347R", "Rtd Hc"],
+  ["348E", "Zuid Mcn"],
+  ["349E", "Zuid Hc"],
+  ["350U", "Ut Mcn"],
+  ["351U", "Ut Hc"],
+  ["352N", "Noord Mcn"],
+  ["353N", "Noord Hc"],
+  ["354X", "Gvc - Ledn Mcn"],
+  ["355X", "Gvc - Ledn Hc"],
+  ["360H", "Oost Mcn"],
+  ["361H", "Oost Hc"],
+  ["362A", "Asd - Flevo Mcn"],
+  ["363A", "Asd - Flevo Hc"],
+  ["364G", "NH - Hfdo Mcn"],
+  ["365G", "NH - Hfdo Hc"],
+  ["366R", "Rtd Mcn"],
+  ["367R", "Rtd Hc"],
+  ["368E", "Zuid Mcn"],
+  ["369E", "Zuid Hc"],
+  ["370U", "Ut Mcn"],
+  ["371U", "Ut Hc"],
+  ["372N", "Noord Mcn"],
+  ["373N", "Noord Hc"],
+  ["374X", "Gvc - Ledn Mcn"],
+  ["375X", "Gvc - Ledn Hc"],
+  ["380H", "Zuid + Ut Mcn"],
+  ["381A", "Asd - NH Hc"],
+  ["382G", "Asd - NH Mcn"],
+  ["383R", "Rtd - Gvc Mcn"],
+  ["384E", "Zuid + Ut Hc"],
+  ["385U", "Noord + Oost Hc"],
+  ["386N", "Noord + Oost Mcn"],
+  ["387X", "Rtd - Gvc Hc"]
+].map(([code, label]) => ({
+  code,
+  label,
+  description: `Operational service code from the June 24, 2026 duty-code reference table: ${label}.`,
+  category: "service" as const,
+  aliases: []
+}));
+
 export const DUTY_CODE_CATALOG: DutyCodeDefinition[] = [
+  ...SERVICE_DUTY_CODES,
   {
     code: "LATE",
     label: "Late Shift",
@@ -21,7 +76,7 @@ export const DUTY_CODE_CATALOG: DutyCodeDefinition[] = [
     label: "Night Shift",
     description: "Overnight operational duty, normally 23:00-07:05 when roster times match the standard pattern.",
     category: "working",
-    aliases: ["N", "NIGHT SHIFT", "NACHT", "382G"]
+    aliases: ["N", "NIGHT SHIFT", "NACHT"]
   },
   {
     code: "OFF",

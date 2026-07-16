@@ -46,8 +46,21 @@ const discrepancies = loadTsModule("lib/calendar/duty-discrepancies.ts", {
 
 test("duty code catalogue describes canonical and loaded codes", () => {
   assert.match(dutyCodes.dutyCodeDescription({ original_duty_code: "VL", duty_label: "Vacation" }), /Vacation or approved leave day/);
-  assert.match(dutyCodes.dutyCodeDescription({ original_duty_code: "382G", duty_label: "Night Shift" }), /Overnight operational duty/);
+  assert.match(dutyCodes.dutyCodeDescription({ original_duty_code: "382G", duty_label: "Asd - NH Mcn" }), /Asd - NH Mcn/);
   assert.match(dutyCodes.dutyCodeDescription({ original_duty_code: "ABC", duty_label: "Custom Duty" }), /Custom roster duty/);
+});
+
+test("reference table service codes resolve from 3-digit letter duty codes", () => {
+  assert.equal(dutyCodes.findDutyCodeDefinition("110L").label, "LMP 1");
+  assert.equal(dutyCodes.findDutyCodeDefinition("121L").label, "LMP 2");
+  assert.equal(dutyCodes.findDutyCodeDefinition("340H").label, "Oost Mcn");
+  assert.equal(dutyCodes.findDutyCodeDefinition("343A").label, "Asd - Flevo Hc");
+  assert.equal(dutyCodes.findDutyCodeDefinition("364G").label, "NH - Hfdo Mcn");
+  assert.equal(dutyCodes.findDutyCodeDefinition("367R").label, "Rtd Hc");
+  assert.equal(dutyCodes.findDutyCodeDefinition("371U").label, "Ut Hc");
+  assert.equal(dutyCodes.findDutyCodeDefinition("375X").label, "Gvc - Ledn Hc");
+  assert.equal(dutyCodes.findDutyCodeDefinition("382G").label, "Asd - NH Mcn");
+  assert.equal(dutyCodes.findDutyCodeDefinition("387X").label, "Rtd - Gvc Hc");
 });
 
 test("daily discrepancy plan corrects an unambiguous roster row from live Google Calendar", () => {
