@@ -22,8 +22,8 @@ export function WeeklyTimeline({ duties }: { duties: TimelineDuty[] }) {
     <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-white">Weekly schedule overview</h2>
-          <p className="text-sm text-zinc-500">Next seven roster entries</p>
+          <h2 className="text-lg font-semibold text-white">10-day schedule rollout</h2>
+          <p className="text-sm text-zinc-500">Calendar-synced roster preview from today onward</p>
         </div>
         <StatusBadge tone="cyan">{duties.length} loaded</StatusBadge>
       </div>

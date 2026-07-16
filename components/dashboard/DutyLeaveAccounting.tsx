@@ -36,6 +36,24 @@ function storageKey(scope: string) {
   return `emma-occ:sick-leave:${scope}`;
 }
 
+function addDays(date: string, days: number) {
+  const next = new Date(`${date}T00:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next.toISOString().slice(0, 10);
+}
+
+function shortDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    timeZone: "UTC"
+  }).format(new Date(`${value}T00:00:00.000Z`));
+}
+
+function rolloutLabel(index: number) {
+  return index === 0 ? "Today" : `D+${index}`;
+}
+
 export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, persistMode = "local" }: DutyLeaveAccountingProps) {
   const [sickLeaveIds, setSickLeaveIds] = useState<Set<string>>(() => new Set(duties.filter((duty) => duty.is_sick_leave).map((duty) => duty.id)));
   const [saveState, setSaveState] = useState("");
@@ -55,7 +73,15 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
 
   const accounting = useMemo(() => calculateDutyAccounting(duties, sickLeaveIds, today), [duties, sickLeaveIds, today]);
   const ledgerDuties = useMemo(() => currentLedgerDuties(duties, today), [duties, today]);
-  const upcomingDuties = ledgerDuties;
+  const rolloutDates = useMemo(() => Array.from({ length: 10 }, (_, index) => addDays(today, index)), [today]);
+  const dutiesByDate = useMemo(
+    () =>
+      ledgerDuties.reduce<Record<string, AccountingDuty[]>>((grouped, duty) => {
+        grouped[duty.duty_date] = [...(grouped[duty.duty_date] ?? []), duty];
+        return grouped;
+      }, {}),
+    [ledgerDuties]
+  );
   const ledgerEnd = ledgerDuties.at(-1)?.duty_date ?? today;
 
   async function toggleSickLeave(duty: AccountingDuty, checked: boolean) {
@@ -165,12 +191,34 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
       <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-white">Upcoming duties</h2>
-            <p className="text-sm text-zinc-500">Rolling 10-day calendar-synced roster from today with editable SL marking.</p>
+            <h2 className="text-lg font-semibold text-white">10-day rollout preview</h2>
+            <p className="text-sm text-zinc-500">Today stays first. The preview rolls forward daily and labels missing calendar-synced roster days.</p>
           </div>
-          <StatusBadge tone="cyan">{upcomingDuties.length} loaded</StatusBadge>
+          <StatusBadge tone="cyan">{ledgerDuties.length} synced row(s)</StatusBadge>
         </div>
-        <div className="mt-4">{upcomingDuties.length ? upcomingDuties.map((duty) => renderDutyRow(duty, true)) : <p className="py-8 text-sm text-zinc-500">No upcoming duties loaded.</p>}</div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {rolloutDates.map((date, index) => {
+            const dayDuties = dutiesByDate[date] ?? [];
+            const primaryDuty = dayDuties[0];
+            const checked = primaryDuty ? sickLeaveIds.has(primaryDuty.id) : false;
+            const tone = primaryDuty ? rowTone(primaryDuty, sickLeaveIds) : "neutral";
+
+            return (
+              <div key={date} className="min-h-[112px] rounded-md border border-occ-line bg-occ-ink p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{rolloutLabel(index)}</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{shortDate(date)}</p>
+                  </div>
+                  <StatusBadge tone={tone}>{primaryDuty ? (checked ? "SL" : primaryDuty.duty_label) : "No row"}</StatusBadge>
+                </div>
+                <p className="mt-3 text-xs text-zinc-500">{primaryDuty ? shiftCodeDescription(primaryDuty) : "No synced roster row for this date."}</p>
+                {primaryDuty ? <p className="mt-1 text-xs text-zinc-600">{timeRange(primaryDuty)}</p> : null}
+                {dayDuties.length > 1 ? <p className="mt-1 text-xs text-occ-cyan">+{dayDuties.length - 1} additional row(s)</p> : null}
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
