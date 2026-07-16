@@ -152,3 +152,29 @@ test("Google Calendar rows replace roster rows for dates that have live calendar
   assert.equal(merged.some((row) => row.id === "google-night"), true);
   assert.equal(merged.some((row) => row.id === "roster-next"), true);
 });
+
+test("Google Calendar service-code titles translate to plain language", () => {
+  const row = calendarLedger.googleCalendarItemToLedgerDuty(
+    {
+      id: "item-service-code",
+      source_event_id: "night-387x",
+      title: "Nightshift-387X",
+      description: null,
+      location: null,
+      starts_at: "2026-07-18T21:00:00.000Z",
+      ends_at: "2026-07-19T05:05:00.000Z",
+      all_day_date: null,
+      all_day_end_date: null,
+      is_all_day: false,
+      status: "confirmed",
+      synced_at: "2026-07-18T02:50:11.000Z"
+    },
+    "2026-07-18",
+    "Europe/Amsterdam"
+  );
+
+  assert.equal(row.original_duty_code, "387X");
+  assert.equal(row.duty_label, "Night Shift - Rtd - Gvc Hc");
+  assert.equal(row.start_time, "23:00");
+  assert.equal(row.end_time, "07:05");
+});

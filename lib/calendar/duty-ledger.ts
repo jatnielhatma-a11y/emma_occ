@@ -61,15 +61,31 @@ function titleLooksLikeDuty(title: string) {
   return DUTY_TITLE_PATTERNS.some((pattern) => pattern.test(trimmed));
 }
 
+function serviceCodeFromTitle(title: string) {
+  return title.match(/\b(\d{3}[A-Z])\b/i)?.[1].toUpperCase() ?? null;
+}
+
+function shiftPrefixFromTitle(title: string) {
+  const lower = title.toLowerCase();
+  if (lower.includes("nightshift") || lower.includes("night shift")) return "Night Shift";
+  if (lower.includes("lateshift") || lower.includes("late shift")) return "Late Shift";
+  return null;
+}
+
 function dutyLabelFromTitle(title: string) {
   const normalized = title.trim();
   const lower = normalized.toLowerCase();
+  const serviceCode = serviceCodeFromTitle(normalized);
+  const serviceDefinition = findDutyCodeDefinition(serviceCode);
+  const shiftPrefix = shiftPrefixFromTitle(normalized);
+  if (serviceDefinition && shiftPrefix) return `${shiftPrefix} - ${serviceDefinition.label}`;
+  if (serviceDefinition) return serviceDefinition.label;
+
   const codePrefix = normalized.match(/^([A-Z0-9*]{1,8})\s+-\s+/i)?.[1];
   const codeDefinition = findDutyCodeDefinition(codePrefix ?? normalized);
   if (codeDefinition) return codeDefinition.label;
 
-  if (lower.includes("night shift")) return "Night Shift";
-  if (lower.includes("late shift")) return "Late Shift";
+  if (shiftPrefix) return shiftPrefix;
   if (lower.includes("off") || lower.includes("rest day")) return "OFF Day";
   if (lower.includes("vacation") || lower.includes("annual leave") || lower.includes("holiday") || lower.includes("vakantie") || lower.includes("verlof")) return "Vacation";
   if (lower.includes("reserve")) return "Reserve Duty";
@@ -78,6 +94,9 @@ function dutyLabelFromTitle(title: string) {
 
 function dutyCodeFromTitle(title: string, label: string) {
   const trimmed = title.trim();
+  const serviceCode = serviceCodeFromTitle(trimmed);
+  if (serviceCode) return serviceCode;
+
   const codeMatch = trimmed.match(/^([A-Z0-9*]{1,8})\s+-\s+/i);
   if (codeMatch) return codeMatch[1].toUpperCase();
   if (label === "OFF Day" && /\bNS\b/i.test(trimmed)) return "NS";
