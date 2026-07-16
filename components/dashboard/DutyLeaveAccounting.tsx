@@ -124,9 +124,10 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
     const vacation = isVacationDuty(duty);
     const canMarkSickLeave = !duty.is_off && !vacation && duty.source_kind !== "google_calendar";
     const checked = sickLeaveIds.has(duty.id);
+    const codeDescription = shiftCodeDescription(duty);
 
     return (
-      <div key={`${compact ? "upcoming" : "ledger"}-${duty.id}`} className="grid gap-3 border-t border-occ-line py-3 sm:grid-cols-[118px_1fr_118px_150px] sm:items-center">
+      <div key={`${compact ? "upcoming" : "ledger"}-${duty.id}`} className="grid gap-3 border-t border-occ-line py-3 sm:grid-cols-[118px_1fr_118px_150px] sm:items-start">
         <span className="text-sm font-medium text-zinc-200">{duty.duty_date}</span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -136,8 +137,11 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
             </span>
             {duty.is_overnight ? <span className="text-xs text-zinc-500">overnight</span> : null}
           </div>
-          <p className="mt-1 truncate text-xs text-zinc-500">Shift code description: {shiftCodeDescription(duty)}</p>
-          <p className="mt-1 truncate text-xs text-zinc-600">{duty.source_kind === "google_calendar" ? "Live Google Calendar" : duty.location ?? "n/a"}</p>
+          <div className="mt-2 rounded-md border border-occ-line bg-black/20 p-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Code description</p>
+            <p className="mt-1 break-words text-xs leading-5 text-zinc-300">{codeDescription}</p>
+          </div>
+          <p className="mt-1 break-words text-xs text-zinc-600">{duty.source_kind === "google_calendar" ? "Live Google Calendar" : duty.location ?? "n/a"}</p>
         </div>
         <span className="text-sm text-zinc-400">{timeRange(duty)}</span>
         <label className="flex items-center gap-2 text-sm text-zinc-300">

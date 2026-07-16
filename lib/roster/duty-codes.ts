@@ -141,6 +141,9 @@ export function dutyCodeDescription(duty: Pick<AccountingDuty, "duty_label" | "o
 
   if (definition) {
     const displayCode = code || definition.code;
+    if (definition.category === "service" && label.toLowerCase().includes(definition.label.toLowerCase()) && label.toLowerCase() !== definition.label.toLowerCase()) {
+      return `${displayCode} - ${label}: ${definition.description}`;
+    }
     return `${displayCode} - ${definition.label}: ${definition.description}`;
   }
 

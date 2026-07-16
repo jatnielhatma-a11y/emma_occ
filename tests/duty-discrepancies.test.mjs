@@ -63,6 +63,18 @@ test("reference table service codes resolve from 3-digit letter duty codes", () 
   assert.equal(dutyCodes.findDutyCodeDefinition("387X").label, "Rtd - Gvc Hc");
 });
 
+test("service code descriptions keep calendar shift context in plain language", () => {
+  assert.match(
+    dutyCodes.dutyCodeDescription({
+      original_duty_code: "387X",
+      duty_label: "Night Shift - Rtd - Gvc Hc",
+      start_time: "23:00",
+      end_time: "07:05"
+    }),
+    /387X - Night Shift - Rtd - Gvc Hc/
+  );
+});
+
 test("daily discrepancy plan corrects an unambiguous roster row from live Google Calendar", () => {
   const summary = discrepancies.planDailyDutyDiscrepancyActions({
     rosterDuties: [
