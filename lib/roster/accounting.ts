@@ -11,6 +11,7 @@ export type AccountingDuty = {
   is_overnight: boolean;
   is_off: boolean;
   is_sick_leave?: boolean | null;
+  source_kind?: "google_calendar" | "roster" | string | null;
 };
 
 const VACATION_WORDS = ["vacation", "annual leave", "holiday", "vakantie", "verlof"];

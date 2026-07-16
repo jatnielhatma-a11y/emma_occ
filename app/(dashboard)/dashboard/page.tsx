@@ -13,6 +13,7 @@ import { IntegrationHealthPanel } from "@/components/nova/IntegrationHealthPanel
 import { LocationPermissionPanel } from "@/components/nova/LocationPermissionPanel";
 import { MissionVoicePanel } from "@/components/nova/MissionVoicePanel";
 import { MissionControl } from "@/components/nova/MissionControl";
+import { calendarItemsToLedgerDuties, mergeRosterAndCalendarLedgerDuties, type GoogleCalendarDutyItem } from "@/lib/calendar/duty-ledger";
 import { fetchLiveWeather } from "@/lib/live-demo";
 import { fetchNsCommuteStatus } from "@/lib/ns-commute";
 import { buildIntegrationHealth } from "@/lib/providers/health";
@@ -33,6 +34,7 @@ type DashboardDuty = {
   is_overnight: boolean;
   is_off: boolean;
   is_sick_leave: boolean;
+  source_kind?: string | null;
 };
 
 type DashboardConflict = {
@@ -77,6 +79,12 @@ function calendarSourceLabel(latestImport?: LatestImport | null) {
   return latestImport.filename;
 }
 
+function addDays(date: string, days: number) {
+  const next = new Date(`${date}T00:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next.toISOString().slice(0, 10);
+}
+
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -84,6 +92,9 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   const today = todayInTimezone();
+  const dutyLedgerEnd = ledgerEndDate(today);
+  const calendarQueryStart = addDays(today, -1);
+  const calendarQueryEndExclusive = addDays(dutyLedgerEnd, 2);
 
   const { data: latestImport } = await supabase
     .from("imports")
@@ -106,6 +117,25 @@ export default async function DashboardPage() {
 
     duties = data ?? [];
   }
+
+  const [{ data: timedCalendarItems = [] }, { data: allDayCalendarItems = [] }] = await Promise.all([
+    supabase
+      .from("nova_calendar_items")
+      .select("id,source_event_id,title,description,location,starts_at,ends_at,all_day_date,all_day_end_date,is_all_day,status,synced_at")
+      .eq("user_id", user?.id)
+      .eq("source_provider", "google_calendar")
+      .neq("status", "cancelled")
+      .gte("starts_at", `${calendarQueryStart}T00:00:00.000Z`)
+      .lt("starts_at", `${calendarQueryEndExclusive}T00:00:00.000Z`),
+    supabase
+      .from("nova_calendar_items")
+      .select("id,source_event_id,title,description,location,starts_at,ends_at,all_day_date,all_day_end_date,is_all_day,status,synced_at")
+      .eq("user_id", user?.id)
+      .eq("source_provider", "google_calendar")
+      .neq("status", "cancelled")
+      .gte("all_day_date", today)
+      .lte("all_day_date", dutyLedgerEnd)
+  ]);
 
   const { data: conflicts = [] } = await supabase
     .from("conflict_logs")
@@ -183,18 +213,27 @@ export default async function DashboardPage() {
     })
   ]);
 
-  const typedDuties = (duties ?? []) as DashboardDuty[];
+  const appTimeZone = process.env.APP_TIMEZONE || "Europe/Amsterdam";
+  const typedRosterDuties = (duties ?? []) as DashboardDuty[];
+  const googleCalendarDutyRows = calendarItemsToLedgerDuties(
+    [...((timedCalendarItems ?? []) as GoogleCalendarDutyItem[]), ...((allDayCalendarItems ?? []) as GoogleCalendarDutyItem[])],
+    today,
+    appTimeZone
+  );
+  const mergedLedgerDuties = mergeRosterAndCalendarLedgerDuties(typedRosterDuties, googleCalendarDutyRows, today);
+  const typedDuties = [
+    ...typedRosterDuties.filter((duty) => duty.duty_date < today || duty.duty_date > dutyLedgerEnd),
+    ...mergedLedgerDuties
+  ] as DashboardDuty[];
   const typedConflicts = (conflicts ?? []) as DashboardConflict[];
   const typedLatestImport = latestImport as LatestImport | null;
-  const appTimeZone = process.env.APP_TIMEZONE || "Europe/Amsterdam";
   const calendarConnected = Boolean(calendarConnection && !calendarConnection.disconnected_at);
   const todayDuty = typedDuties.find((duty) => duty.duty_date === today);
   const nextDuty = typedDuties.find((duty) => duty.duty_date >= today && !duty.is_off);
   const dutyLedgerWindow = currentLedgerDuties(typedDuties, today);
-  const dutyLedgerEnd = ledgerEndDate(today);
   const workingDutyCount = typedDuties.filter((duty) => !duty.is_off && !isVacationDuty(duty)).length;
   const importWindow = typedLatestImport?.comparison?.window;
-  const calendarSource = calendarSourceLabel(typedLatestImport);
+  const calendarSource = googleCalendarDutyRows.length ? `Live Google Calendar + ${calendarSourceLabel(typedLatestImport)}` : calendarSourceLabel(typedLatestImport);
   const integrationHealth = buildIntegrationHealth({
     calendarConnected,
     latestImportReady: Boolean(typedLatestImport),
@@ -410,6 +449,7 @@ export default async function DashboardPage() {
         sourceLabel={calendarSource}
         storageScope={`dashboard-${user?.id ?? "local"}`}
         persistMode="api"
+        enableCalendarRefresh={calendarConnected}
       />
 
       <div className="grid gap-4 md:grid-cols-3">

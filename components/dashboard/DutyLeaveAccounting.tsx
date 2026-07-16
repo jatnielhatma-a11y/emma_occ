@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarCheck, Clock3, HeartPulse, Umbrella } from "lucide-react";
+import { CalendarCheck, Clock3, HeartPulse, RefreshCw, Umbrella } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   calculateDutyAccounting,
@@ -17,6 +18,7 @@ type DutyLeaveAccountingProps = {
   sourceLabel: string;
   storageScope: string;
   persistMode?: "local" | "api";
+  enableCalendarRefresh?: boolean;
 };
 
 function timeRange(duty: AccountingDuty) {
@@ -54,9 +56,12 @@ function rolloutLabel(index: number) {
   return index === 0 ? "Today" : `D+${index}`;
 }
 
-export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, persistMode = "local" }: DutyLeaveAccountingProps) {
+export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, persistMode = "local", enableCalendarRefresh = false }: DutyLeaveAccountingProps) {
+  const router = useRouter();
   const [sickLeaveIds, setSickLeaveIds] = useState<Set<string>>(() => new Set(duties.filter((duty) => duty.is_sick_leave).map((duty) => duty.id)));
   const [saveState, setSaveState] = useState("");
+  const [refreshState, setRefreshState] = useState("");
+  const [isRefreshingCalendar, setIsRefreshingCalendar] = useState(false);
   const key = storageKey(storageScope);
 
   useEffect(() => {
@@ -108,7 +113,7 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
 
   function renderDutyRow(duty: AccountingDuty, compact = false) {
     const vacation = isVacationDuty(duty);
-    const canMarkSickLeave = !duty.is_off && !vacation;
+    const canMarkSickLeave = !duty.is_off && !vacation && duty.source_kind !== "google_calendar";
     const checked = sickLeaveIds.has(duty.id);
 
     return (
@@ -123,7 +128,7 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
             {duty.is_overnight ? <span className="text-xs text-zinc-500">overnight</span> : null}
           </div>
           <p className="mt-1 truncate text-xs text-zinc-500">Shift code description: {shiftCodeDescription(duty)}</p>
-          <p className="mt-1 truncate text-xs text-zinc-600">{duty.location ?? "n/a"}</p>
+          <p className="mt-1 truncate text-xs text-zinc-600">{duty.source_kind === "google_calendar" ? "Live Google Calendar" : duty.location ?? "n/a"}</p>
         </div>
         <span className="text-sm text-zinc-400">{timeRange(duty)}</span>
         <label className="flex items-center gap-2 text-sm text-zinc-300">
@@ -138,6 +143,29 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
         </label>
       </div>
     );
+  }
+
+  async function refreshCalendarPreview() {
+    setIsRefreshingCalendar(true);
+    setRefreshState("Refreshing live Google Calendar...");
+    try {
+      const response = await fetch("/api/calendar/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) {
+        setRefreshState(payload.error ?? "Could not refresh Google Calendar.");
+        return;
+      }
+      setRefreshState("Live Google Calendar refreshed.");
+      router.refresh();
+    } catch {
+      setRefreshState("Could not refresh Google Calendar.");
+    } finally {
+      setIsRefreshingCalendar(false);
+    }
   }
 
   return (
@@ -194,8 +222,22 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
             <h2 className="text-lg font-semibold text-white">10-day rollout preview</h2>
             <p className="text-sm text-zinc-500">Today stays first. The preview rolls forward daily and labels missing calendar-synced roster days.</p>
           </div>
-          <StatusBadge tone="cyan">{ledgerDuties.length} synced row(s)</StatusBadge>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge tone="cyan">{ledgerDuties.length} synced row(s)</StatusBadge>
+            {enableCalendarRefresh ? (
+              <button
+                type="button"
+                onClick={refreshCalendarPreview}
+                disabled={isRefreshingCalendar}
+                className="focus-ring inline-flex items-center gap-2 rounded-md border border-occ-line bg-occ-ink px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                <RefreshCw size={15} className={isRefreshingCalendar ? "animate-spin" : ""} />
+                Refresh live calendar
+              </button>
+            ) : null}
+          </div>
         </div>
+        {refreshState ? <p className="mt-3 text-xs text-zinc-500">{refreshState}</p> : null}
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           {rolloutDates.map((date, index) => {
             const dayDuties = dutiesByDate[date] ?? [];
