@@ -55,7 +55,8 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
 
   const accounting = useMemo(() => calculateDutyAccounting(duties, sickLeaveIds, today), [duties, sickLeaveIds, today]);
   const ledgerDuties = useMemo(() => currentLedgerDuties(duties, today), [duties, today]);
-  const upcomingDuties = useMemo(() => ledgerDuties.slice(0, 7), [ledgerDuties]);
+  const upcomingDuties = ledgerDuties;
+  const ledgerEnd = ledgerDuties.at(-1)?.duty_date ?? today;
 
   async function toggleSickLeave(duty: AccountingDuty, checked: boolean) {
     const next = new Set(sickLeaveIds);
@@ -165,7 +166,7 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-white">Upcoming duties</h2>
-            <p className="text-sm text-zinc-500">Next seven roster entries with editable SL marking.</p>
+            <p className="text-sm text-zinc-500">Rolling 10-day calendar-synced roster from today with editable SL marking.</p>
           </div>
           <StatusBadge tone="cyan">{upcomingDuties.length} loaded</StatusBadge>
         </div>
@@ -176,7 +177,9 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-white">Duty ledger</h2>
-            <p className="text-sm text-zinc-500">Rolling 10-day roster from today, including rest days, vacation, and sick-leave markings.</p>
+            <p className="text-sm text-zinc-500">
+              Rolling 10-day roster from {today} through {ledgerEnd}, including rest days, vacation, and sick-leave markings.
+            </p>
           </div>
           <StatusBadge tone="cyan">{ledgerDuties.length} in 10 days</StatusBadge>
         </div>

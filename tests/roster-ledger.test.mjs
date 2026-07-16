@@ -42,6 +42,24 @@ test("duty ledger starts at the current day and keeps chronological order", () =
   assert.equal(JSON.stringify(rows.map((row) => row.id)), JSON.stringify(["today-early", "today-late", "future", "day-ten"]));
 });
 
+test("duty ledger keeps the rolling 10-day calendar window from today", () => {
+  const { currentLedgerDuties } = loadTsModule("lib/roster/ledger.ts");
+  const rows = currentLedgerDuties(
+    [
+      { id: "stale-yesterday", duty_date: "2026-07-15", start_time: "08:00", end_time: "16:05" },
+      { id: "today", duty_date: "2026-07-16", start_time: "08:00", end_time: "16:05" },
+      { id: "plus-nine", duty_date: "2026-07-25", start_time: "08:00", end_time: "16:05" },
+      { id: "plus-ten", duty_date: "2026-07-26", start_time: "08:00", end_time: "16:05" }
+    ],
+    "2026-07-16"
+  );
+
+  assert.equal(rows[0].id, "today");
+  assert.equal(rows.at(-1).id, "plus-nine");
+  assert.equal(rows.some((row) => row.id === "stale-yesterday"), false);
+  assert.equal(rows.some((row) => row.id === "plus-ten"), false);
+});
+
 test("shift code description combines roster code and shift label", () => {
   const { shiftCodeDescription } = loadTsModule("lib/roster/ledger.ts");
 

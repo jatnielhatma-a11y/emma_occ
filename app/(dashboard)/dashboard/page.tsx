@@ -17,7 +17,10 @@ import { fetchLiveWeather } from "@/lib/live-demo";
 import { fetchNsCommuteStatus } from "@/lib/ns-commute";
 import { buildIntegrationHealth } from "@/lib/providers/health";
 import { DUTY_MINUTES, formatDutyMinutes, isVacationDuty } from "@/lib/roster/accounting";
+import { currentLedgerDuties } from "@/lib/roster/ledger";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 type DashboardDuty = {
   id: string;
@@ -81,8 +84,6 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   const today = todayInTimezone();
-  const nextWeek = new Date();
-  nextWeek.setDate(nextWeek.getDate() + 7);
 
   const { data: latestImport } = await supabase
     .from("imports")
@@ -189,9 +190,8 @@ export default async function DashboardPage() {
   const calendarConnected = Boolean(calendarConnection && !calendarConnection.disconnected_at);
   const todayDuty = typedDuties.find((duty) => duty.duty_date === today);
   const nextDuty = typedDuties.find((duty) => duty.duty_date >= today && !duty.is_off);
-  const upcomingDuties = typedDuties.filter((duty) => duty.duty_date >= today);
-  const nextWeekEnd = nextWeek.toISOString().slice(0, 10);
-  const nextWeekDuties = upcomingDuties.filter((duty) => duty.duty_date <= nextWeekEnd);
+  const dutyLedgerWindow = currentLedgerDuties(typedDuties, today);
+  const dutyLedgerEnd = dutyLedgerWindow.at(-1)?.duty_date ?? today;
   const workingDutyCount = typedDuties.filter((duty) => !duty.is_off && !isVacationDuty(duty)).length;
   const importWindow = typedLatestImport?.comparison?.window;
   const calendarSource = calendarSourceLabel(typedLatestImport);
@@ -415,10 +415,10 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard label="Calendar sync" value={latestCalendarLog?.status ?? "Ready"} helper={latestCalendarLog?.error_message ?? "Preview/writeback available after OAuth connection"} icon={RefreshCw} />
         <StatCard label="Import status" value={typedLatestImport?.status ?? "No import"} helper={typedLatestImport?.filename ?? "Upload your first roster"} icon={CalendarDays} />
-        <StatCard label="Upcoming rows" value={nextWeekDuties.length} helper={`Loaded through ${nextWeekEnd}`} icon={AlertTriangle} />
+        <StatCard label="10-day ledger" value={dutyLedgerWindow.length} helper={`Loaded ${today} through ${dutyLedgerEnd}`} icon={AlertTriangle} />
       </div>
 
-      <WeeklyTimeline duties={nextWeekDuties} />
+      <WeeklyTimeline duties={dutyLedgerWindow} />
 
       <div className="grid gap-5 xl:grid-cols-[1.3fr_0.9fr]">
         <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
@@ -445,7 +445,9 @@ export default async function DashboardPage() {
               <p className="mt-1 text-xs text-zinc-500">15:00-23:05 duties</p>
             </div>
           </div>
-          <p className="mt-4 text-xs text-zinc-600">{nextWeekDuties.length} upcoming row(s) loaded through {nextWeekEnd}.</p>
+          <p className="mt-4 text-xs text-zinc-600">
+            {dutyLedgerWindow.length} synced calendar roster row(s) in the rolling 10-day ledger from {today} through {dutyLedgerEnd}.
+          </p>
         </section>
         <ConflictPanel conflicts={typedConflicts} />
       </div>
