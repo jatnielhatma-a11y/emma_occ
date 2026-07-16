@@ -7,7 +7,7 @@ import ts from "typescript";
 
 const require = createRequire(import.meta.url);
 
-function loadTsModule(path) {
+function loadTsModule(path, mocks = {}) {
   const source = readFileSync(path, "utf8");
   const transpiled = ts.transpileModule(source, {
     compilerOptions: {
@@ -16,17 +16,20 @@ function loadTsModule(path) {
     }
   }).outputText;
   const module = { exports: {} };
+  const customRequire = (id) => mocks[id] ?? require(id);
   vm.runInNewContext(transpiled, {
     module,
     exports: module.exports,
-    require,
+    require: customRequire,
     String
   });
   return module.exports;
 }
 
+const dutyCodes = loadTsModule("lib/roster/duty-codes.ts");
+
 test("duty ledger starts at the current day and keeps chronological order", () => {
-  const { currentLedgerDuties } = loadTsModule("lib/roster/ledger.ts");
+  const { currentLedgerDuties } = loadTsModule("lib/roster/ledger.ts", { "./duty-codes": dutyCodes });
   const rows = currentLedgerDuties(
     [
       { id: "past", duty_date: "2026-07-12", start_time: "23:00", end_time: "07:05" },
@@ -43,7 +46,7 @@ test("duty ledger starts at the current day and keeps chronological order", () =
 });
 
 test("duty ledger keeps the rolling 10-day calendar window from today", () => {
-  const { currentLedgerDuties, ledgerEndDate } = loadTsModule("lib/roster/ledger.ts");
+  const { currentLedgerDuties, ledgerEndDate } = loadTsModule("lib/roster/ledger.ts", { "./duty-codes": dutyCodes });
   const rows = currentLedgerDuties(
     [
       { id: "stale-yesterday", duty_date: "2026-07-15", start_time: "08:00", end_time: "16:05" },
@@ -62,8 +65,8 @@ test("duty ledger keeps the rolling 10-day calendar window from today", () => {
 });
 
 test("shift code description combines roster code and shift label", () => {
-  const { shiftCodeDescription } = loadTsModule("lib/roster/ledger.ts");
+  const { shiftCodeDescription } = loadTsModule("lib/roster/ledger.ts", { "./duty-codes": dutyCodes });
 
-  assert.equal(shiftCodeDescription({ original_duty_code: "382G", duty_label: "Night Shift" }), "382G - Night Shift");
-  assert.equal(shiftCodeDescription({ original_duty_code: "", duty_label: "Late Shift" }), "Late Shift");
+  assert.match(shiftCodeDescription({ original_duty_code: "382G", duty_label: "Night Shift" }), /382G - Night Shift: Overnight operational duty/);
+  assert.match(shiftCodeDescription({ original_duty_code: "", duty_label: "Late Shift" }), /LATE - Late Shift: Late operational duty/);
 });

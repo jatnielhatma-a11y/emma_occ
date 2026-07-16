@@ -8,6 +8,7 @@ import {
   type GoogleCalendarConnection,
   type SyncableDuty
 } from "@/lib/calendar/google";
+import { reconcileDailyDutyDiscrepancies, type DailyDutyDiscrepancySummary } from "@/lib/calendar/duty-discrepancies";
 import { syncGoogleContentForUser, type GoogleContentSyncSummary } from "@/lib/calendar/google-import";
 import { buildNsPlannerUrl } from "@/lib/ns-commute";
 
@@ -24,6 +25,7 @@ type SyncResult = {
   dutyWindow?: { startDate: string; endDate: string };
   plan?: ReturnType<typeof buildCalendarSyncPlan>;
   googleContent?: GoogleContentSyncSummary;
+  dutyDiscrepancies?: DailyDutyDiscrepancySummary;
   results?: Array<{ ok: boolean; idempotencyKey: string; eventId?: string }>;
   error?: string;
   skipped?: boolean;
@@ -133,6 +135,16 @@ export async function syncGoogleCalendarForUser({
 
   const { data: duties = [] } = await dutiesQuery.order("duty_date", { ascending: true });
 
+  const dutyDiscrepancies = dutyWindow
+    ? await reconcileDailyDutyDiscrepancies({
+        supabase,
+        userId,
+        importId: activeImportId,
+        rosterDuties: (duties ?? []) as any[],
+        dutyWindow
+      })
+    : undefined;
+
   const { data: commute } = await supabase
     .from("commute_settings")
     .select("enabled,before_minutes,after_minutes,travel_mode,home_station,work_station")
@@ -212,5 +224,5 @@ export async function syncGoogleCalendarForUser({
     .eq("id", connection.id);
   await supabase.from("imports").update({ status: nextImportStatus }).eq("id", activeImportId).eq("user_id", userId);
 
-  return { ok: true, importId: activeImportId, dutyRowsSelected: duties.length, dutyWindow: dutyWindow ?? undefined, plan, googleContent, results };
+  return { ok: true, importId: activeImportId, dutyRowsSelected: duties.length, dutyWindow: dutyWindow ?? undefined, plan, googleContent, dutyDiscrepancies, results };
 }

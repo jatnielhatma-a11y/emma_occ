@@ -83,6 +83,14 @@ export async function GET(request: Request) {
         googleCalendarItems: result.googleContent?.calendarItemsSynced ?? 0,
         googleTasks: result.googleContent?.tasksSynced ?? 0,
         googleSpecialDates: result.googleContent?.specialDatesSynced ?? 0,
+        dutyDiscrepancies: result.dutyDiscrepancies
+          ? {
+              checkedDates: result.dutyDiscrepancies.checkedDates,
+              corrected: result.dutyDiscrepancies.corrected,
+              logged: result.dutyDiscrepancies.logged,
+              skipped: result.dutyDiscrepancies.skipped
+            }
+          : null,
         error: result.error
       });
     } catch (error) {

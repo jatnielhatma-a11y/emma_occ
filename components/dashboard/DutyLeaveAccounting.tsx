@@ -9,6 +9,7 @@ import {
   isVacationDuty,
   type AccountingDuty
 } from "@/lib/roster/accounting";
+import { DUTY_CODE_CATALOG, dutyCodeDescription } from "@/lib/roster/duty-codes";
 import { currentLedgerDuties, ledgerEndDate, shiftCodeDescription } from "@/lib/roster/ledger";
 import { StatusBadge } from "./StatusBadge";
 
@@ -78,6 +79,14 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
 
   const accounting = useMemo(() => calculateDutyAccounting(duties, sickLeaveIds, today), [duties, sickLeaveIds, today]);
   const ledgerDuties = useMemo(() => currentLedgerDuties(duties, today), [duties, today]);
+  const loadedDutyCodes = useMemo(() => {
+    const rows = new Map<string, string>();
+    for (const duty of ledgerDuties) {
+      const key = duty.original_duty_code?.trim() || duty.duty_label;
+      rows.set(key, dutyCodeDescription(duty));
+    }
+    return [...rows.entries()].map(([code, description]) => ({ code, description }));
+  }, [ledgerDuties]);
   const rolloutDates = useMemo(() => Array.from({ length: 10 }, (_, index) => addDays(today, index)), [today]);
   const dutiesByDate = useMemo(
     () =>
@@ -275,6 +284,46 @@ export function DutyLeaveAccounting({ duties, today, sourceLabel, storageScope, 
         </div>
         <div className="mt-4">
           {ledgerDuties.length ? ledgerDuties.map((duty) => renderDutyRow(duty)) : <p className="py-8 text-sm text-zinc-500">No roster rows loaded from today onward.</p>}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-occ-line bg-occ-panel p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Duty code descriptions</h2>
+            <p className="text-sm text-zinc-500">Canonical NOVA codes plus the codes loaded in the current 10-day ledger.</p>
+          </div>
+          <StatusBadge tone="cyan">{loadedDutyCodes.length} loaded code(s)</StatusBadge>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          <div className="rounded-md border border-occ-line bg-occ-ink p-4">
+            <p className="text-sm font-semibold text-zinc-200">Canonical codes</p>
+            <div className="mt-3 space-y-2">
+              {DUTY_CODE_CATALOG.map((definition) => (
+                <div key={definition.code || "blank"} className="rounded-md bg-black/20 p-3">
+                  <p className="text-sm font-semibold text-white">
+                    {definition.code || "blank"} - {definition.label}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">{definition.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-md border border-occ-line bg-occ-ink p-4">
+            <p className="text-sm font-semibold text-zinc-200">Loaded ledger codes</p>
+            <div className="mt-3 space-y-2">
+              {loadedDutyCodes.length ? (
+                loadedDutyCodes.map((row) => (
+                  <div key={row.code || "blank"} className="rounded-md bg-black/20 p-3">
+                    <p className="text-sm font-semibold text-white">{row.code || "blank"}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{row.description}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="py-6 text-sm text-zinc-500">No current duty codes loaded yet.</p>
+              )}
+            </div>
+          </div>
         </div>
       </section>
     </div>

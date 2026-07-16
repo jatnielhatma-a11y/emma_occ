@@ -1,4 +1,5 @@
 import type { AccountingDuty } from "@/lib/roster/accounting";
+import { findDutyCodeDefinition } from "@/lib/roster/duty-codes";
 import { currentLedgerDuties, ledgerEndDate } from "@/lib/roster/ledger";
 
 export type GoogleCalendarDutyItem = {
@@ -63,6 +64,10 @@ function titleLooksLikeDuty(title: string) {
 function dutyLabelFromTitle(title: string) {
   const normalized = title.trim();
   const lower = normalized.toLowerCase();
+  const codePrefix = normalized.match(/^([A-Z0-9*]{1,8})\s+-\s+/i)?.[1];
+  const codeDefinition = findDutyCodeDefinition(codePrefix ?? normalized);
+  if (codeDefinition) return codeDefinition.label;
+
   if (lower.includes("night shift")) return "Night Shift";
   if (lower.includes("late shift")) return "Late Shift";
   if (lower.includes("off") || lower.includes("rest day")) return "OFF Day";
@@ -76,7 +81,8 @@ function dutyCodeFromTitle(title: string, label: string) {
   const codeMatch = trimmed.match(/^([A-Z0-9*]{1,8})\s+-\s+/i);
   if (codeMatch) return codeMatch[1].toUpperCase();
   if (label === "OFF Day" && /\bNS\b/i.test(trimmed)) return "NS";
-  if (label === "Vacation" && /\bVL\b/i.test(trimmed)) return "VL";
+  const definition = findDutyCodeDefinition(trimmed) ?? findDutyCodeDefinition(label);
+  if (definition) return definition.code;
   return "";
 }
 

@@ -32,9 +32,13 @@ function loadTsModule(path, mocks = {}) {
   return module.exports;
 }
 
-const ledger = loadTsModule("lib/roster/ledger.ts");
+const dutyCodes = loadTsModule("lib/roster/duty-codes.ts");
+const ledger = loadTsModule("lib/roster/ledger.ts", {
+  "./duty-codes": dutyCodes
+});
 const calendarLedger = loadTsModule("lib/calendar/duty-ledger.ts", {
-  "@/lib/roster/ledger": ledger
+  "@/lib/roster/ledger": ledger,
+  "@/lib/roster/duty-codes": dutyCodes
 });
 
 test("Google Calendar duty events populate the current 10-day rollout", () => {

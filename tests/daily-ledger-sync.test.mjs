@@ -29,7 +29,10 @@ function loadTsModule(path, mocks = {}) {
   return module.exports;
 }
 
-const ledger = loadTsModule("lib/roster/ledger.ts");
+const dutyCodes = loadTsModule("lib/roster/duty-codes.ts");
+const ledger = loadTsModule("lib/roster/ledger.ts", {
+  "./duty-codes": dutyCodes
+});
 const scheduler = loadTsModule("lib/calendar/daily-ledger-sync.ts", {
   "../roster/ledger": ledger
 });

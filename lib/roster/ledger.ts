@@ -1,4 +1,5 @@
 import type { AccountingDuty } from "./accounting";
+import { dutyCodeDescription } from "./duty-codes";
 
 function dutyTime(value: string | null | undefined) {
   return value?.slice(0, 5) || "99:99";
@@ -33,9 +34,5 @@ export function rollingLedgerDuties<T extends Pick<AccountingDuty, "duty_date" |
 }
 
 export function shiftCodeDescription(duty: Pick<AccountingDuty, "duty_label" | "original_duty_code">) {
-  const code = (duty.original_duty_code ?? "").trim();
-  const label = duty.duty_label.trim() || "Custom Duty";
-
-  if (!code || code.toLowerCase() === label.toLowerCase()) return label;
-  return `${code} - ${label}`;
+  return dutyCodeDescription({ ...duty, start_time: null, end_time: null });
 }
